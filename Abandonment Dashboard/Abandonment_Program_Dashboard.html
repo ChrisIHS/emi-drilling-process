@@ -102,6 +102,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#ECEEF2;color:var(--navy
 /* TABLES */
 .table-card{background:var(--white);border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:16px;}
 .table-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;gap:3px;background:var(--lgray);border-radius:7px;padding:3px;flex-shrink:0;}
+.toggle-btn{border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;color:#888;padding:6px 12px;border-radius:5px;transition:background 0.15s,color 0.15s;white-space:nowrap;}
+.toggle-btn:hover:not(.active){color:var(--navy);}
+.toggle-btn.active{background:var(--navy);color:var(--white);}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 thead th{background:var(--navy);color:var(--white);padding:9px 12px;text-align:right;font-weight:600;font-size:11px;}
 thead th:first-child{text-align:left;border-radius:4px 0 0 0;}
@@ -196,7 +202,7 @@ tfoot td:last-child{border-radius:0 0 4px 0;}
     <div class="chart-card">
       <div class="chart-title" id="curveTitle">Cumulative Spend vs. AFE Program Curve</div>
       <div class="chart-sub" id="curveSub">Daily actual spend vs. programmed AFE spend curve</div>
-      <canvas id="spendCurveChart" height="220"></canvas>
+      <canvas id="spendCurveChart" height="175"></canvas>
       <div class="curve-legend">
         <div class="cl-item"><div class="cl-line" style="background:var(--blue);"></div>Actual Spend</div>
         <div class="cl-item"><div class="cl-dash" style="border-color:#ccc;"></div>AFE Program</div>
@@ -205,9 +211,18 @@ tfoot td:last-child{border-radius:0 0 4px 0;}
       <div class="mini-metric" id="miniMetrics"></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Spend by Service Category</div>
-      <div class="chart-sub" id="donutSub">Actual spend to date</div>
-      <canvas id="donutChart" height="220"></canvas>
+      <div class="table-header-row" style="margin-bottom:10px;">
+        <div>
+          <div class="chart-title">Spend by Service Category</div>
+          <div class="chart-sub" id="donutSub" style="margin-bottom:0;">Actual spend to date</div>
+        </div>
+        <div class="view-toggle">
+          <button type="button" class="toggle-btn active" data-view="line" onclick="setCategoryView('line')">Spend vs Budget</button>
+          <button type="button" class="toggle-btn" data-view="donut" onclick="setCategoryView('donut')">Doughnut</button>
+        </div>
+      </div>
+      <canvas id="donutChart" height="175" style="display:none;"></canvas>
+      <canvas id="categoryLineChart" height="340"></canvas>
     </div>
   </div>
 
@@ -514,7 +529,8 @@ UWIS.forEach(uwi => {
 // ═══════════════════════════════════════════════════════════════
 // CHART REFS
 // ═══════════════════════════════════════════════════════════════
-let chartCurve=null, chartDonut=null, chartDaily=null;
+let chartCurve=null, chartDonut=null, chartCategory=null, chartDaily=null;
+let categoryView='line';
 
 // ═══════════════════════════════════════════════════════════════
 // FORMAT HELPERS
@@ -699,7 +715,11 @@ function renderStatCards(data, isAll){
 function renderCharts(data, isAll){
   renderSpendCurve(data, isAll);
   renderDonut(data);
+  renderCategory(data);
   renderDaily(data, isAll);
+  applyCategoryView();
+  if(chartDonut) chartDonut.resize();
+  if(chartCategory) chartCategory.resize();
 }
 
 function renderSpendCurve(data, isAll){
@@ -798,6 +818,53 @@ function renderDonut(data){
       plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:10,padding:6}},
                tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' ('+((c.raw/data.totalActual)*100).toFixed(1)+'%)'}}}}
   });
+}
+
+function renderCategory(data){
+  const cats = data.cats;
+  const labels = cats.map(c=>c.label);
+  const actVals = cats.map(c=>c.actual);
+  const afeVals = cats.map(c=>c.afe);
+  if(chartCategory) chartCategory.destroy();
+  chartCategory = new Chart(document.getElementById('categoryLineChart').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Actual Spend',data:actVals,backgroundColor:'#2E75B6',borderRadius:3,maxBarThickness:14},
+      {label:'AFE Budget',data:afeVals,backgroundColor:'#C9A84C',borderRadius:3,maxBarThickness:14}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{
+        legend:{display:true,position:'top',align:'end',labels:{font:{size:9},boxWidth:10,padding:8}},
+        tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw)}}
+      },
+      scales:{
+        x:{ticks:{font:{size:8},color:'#888',maxRotation:55,minRotation:55},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#888',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#eee'}}
+      },
+      interaction:{mode:'index',intersect:false}
+    }
+  });
+}
+
+// ── CATEGORY VIEW TOGGLE ─────────────────────────────────────────
+function applyCategoryView(){
+  const donutCanvas = document.getElementById('donutChart');
+  const lineCanvas = document.getElementById('categoryLineChart');
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === categoryView));
+  if(categoryView === 'donut'){
+    lineCanvas.style.display = 'none';
+    donutCanvas.style.display = 'block';
+  } else {
+    donutCanvas.style.display = 'none';
+    lineCanvas.style.display = 'block';
+  }
+}
+
+function setCategoryView(view){
+  categoryView = view;
+  applyCategoryView();
+  if(chartDonut) chartDonut.resize();
+  if(chartCategory) chartCategory.resize();
 }
 
 function renderDaily(data, isAll){
