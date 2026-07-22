@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Well Cost AFE Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1A3A5C;
+    --blue:   #2E75B6;
+    --ltblue: #D5E8F0;
+    --gold:   #C9A84C;
+    --ltgold: #FFF8E7;
+    --green:  #1A7A3C;
+    --ltgrn:  #E6F4EC;
+    --red:    #C0392B;
+    --ltred:  #FDECEA;
+    --amber:  #D4811A;
+    --ltamb:  #FEF3E2;
+    --lgray:  #F4F5F7;
+    --mgray:  #DDE1E9;
+    --dgray:  #4A4A4A;
+    --white:  #FFFFFF;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #ECEEF2;
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--navy);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-logo { font-size: 18px; font-weight: 800; color: var(--gold); letter-spacing: 0.5px; }
+  .topbar-sub { font-size: 11px; color: #aab; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .well-badge {
+    background: rgba(201,168,76,0.18);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .status-live {
+    display: flex; align-items: center; gap-6px; gap: 6px;
+    background: rgba(26,122,60,0.2);
+    border: 1px solid #1A7A3C;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #4AE080;
+  }
+  .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #4AE080;
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .topbar-date { font-size: 11px; color: #889; }
+
+  /* ── LAYOUT ── */
+  .container { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── WELL INFO BAR ── */
+  .well-info {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    border-left: 4px solid var(--gold);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .wi-item { display: flex; flex-direction: column; }
+  .wi-label { font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .wi-value { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .wi-divider { width: 1px; background: var(--mgray); align-self: stretch; }
+
+  /* ── STAT CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-top: 3px solid;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 50px; height: 50px;
+    border-radius: 50% 0 0 0;
+    opacity: 0.07;
+  }
+  .sc-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+  .sc-value { font-size: 22px; font-weight: 800; margin-bottom: 2px; line-height: 1; }
+  .sc-sub { font-size: 10px; color: #888; }
+  .sc-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; margin-top: 4px;
+  }
+
+  /* ── CHARTS ROW ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .chart-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .chart-title {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .chart-sub { font-size: 10px; color: #888; margin-bottom: 14px; }
+
+  /* ── AFE TABLE ── */
+  .table-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 16px;
+  }
+  .table-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    background: var(--navy);
+    color: var(--white);
+    padding: 9px 12px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  thead th:first-child { text-align: left; border-radius: 4px 0 0 0; }
+  thead th:last-child  { border-radius: 0 4px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--mgray); }
+  tbody tr:nth-child(even) { background: var(--lgray); }
+  tbody tr:hover { background: var(--ltblue); }
+  tbody td { padding: 9px 12px; text-align: right; }
+  tbody td:first-child { text-align: left; font-weight: 600; }
+  tfoot td { padding: 10px 12px; text-align: right; font-weight: 700; background: var(--navy); color: var(--white); }
+  tfoot td:first-child { text-align: left; border-radius: 0 0 0 4px; }
+  tfoot td:last-child  { border-radius: 0 0 4px 0; }
+
+  .variance-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .variance-bar-bg { flex: 1; height: 8px; background: var(--mgray); border-radius: 4px; overflow: hidden; min-width: 80px; }
+  .variance-bar-fill { height: 100%; border-radius: 4px; }
+  .variance-pct { font-size: 10px; font-weight: 700; min-width: 36px; text-align: right; }
+
+  .status-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  /* ── NPT & ALERTS ── */
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-title { font-weight: 700; font-size: 11px; margin-bottom: 2px; }
+  .alert-body { color: var(--dgray); font-size: 10px; line-height: 1.4; }
+
+  /* ── PHASE TRACKER ── */
+  .phase-track {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .phase-seg {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    position: relative;
+  }
+  .phase-seg::after {
+    content: '▶';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #aab;
+    z-index: 1;
+  }
+  .phase-seg:last-child::after { display: none; }
+  .phase-complete { background: var(--navy); color: var(--white); }
+  .phase-active   { background: var(--gold); color: var(--navy); animation: phaseGlow 2s infinite; }
+  .phase-pending  { background: var(--mgray); color: #888; }
+  @keyframes phaseGlow { 0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)} 50%{box-shadow:0 0 0 4px rgba(201,168,76,0.2)} }
+  .phase-days { font-size: 9px; font-weight: 400; display: block; margin-top: 1px; opacity: 0.85; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--mgray); }
+
+  /* ── SPEND CURVE LEGEND ── */
+  .curve-legend {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .cl-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--dgray); }
+  .cl-line { width: 20px; height: 3px; border-radius: 2px; }
+  .cl-dash { width: 20px; height: 0; border-top: 2px dashed; border-radius: 2px; }
+
+  /* ── COST PER METRE MINI ── */
+  .mini-metric {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .mm-card {
+    flex: 1;
+    min-width: 100px;
+    background: var(--lgray);
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .mm-val { font-size: 18px; font-weight: 800; color: var(--navy); }
+  .mm-lbl { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+  .mm-vs  { font-size: 9px; margin-top: 2px; }
+
+  /* ── EMI FOOTER ── */
+  .emi-footer {
+    background: var(--navy);
+    border-radius: 8px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .emi-footer-brand { font-size: 14px; font-weight: 800; color: var(--gold); }
+  .emi-footer-tag   { font-size: 11px; color: #aab; }
+  .emi-footer-right { font-size: 10px; color: #778; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div>
+      <div class="topbar-logo">EMI CostTrack™</div>
+      <div class="topbar-sub">Well AFE Performance Dashboard</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="well-badge">📍 Clearwater 14-22-065-05W5</div>
+    <div class="status-live"><div class="pulse"></div>LIVE</div>
+    <div class="topbar-date" id="liveDate"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- WELL INFO BAR -->
+  <div class="well-info">
+    <div class="wi-item"><span class="wi-label">Operator</span><span class="wi-value">Whitecap Resources Inc.</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Engineering Firm</span><span class="wi-value">Magus Engineering Ltd.</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Drilling Contractor</span><span class="wi-value">Precision Drilling Corp — Rig #427</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Spud Date</span><span class="wi-value">April 14, 2025</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Well Day</span><span class="wi-value" style="color:var(--blue);">Day 29 of 34 (Est.)</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Current Depth</span><span class="wi-value">4,812 m MD</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Target TD</span><span class="wi-value">5,100 m MD</span></div>
+    <div class="wi-divider"></div>
+    <div class="wi-item"><span class="wi-label">Current Phase</span><span class="wi-value" style="color:var(--gold);">⚙ Lateral Drilling</span></div>
+  </div>
+
+  <!-- PHASE TRACKER -->
+  <div class="section-label">Well Phase Progress</div>
+  <div class="phase-track">
+    <div class="phase-seg phase-complete">Surface Hole<span class="phase-days">Days 1–5 ✓</span></div>
+    <div style="width:12px;flex-shrink:0;"></div>
+    <div class="phase-seg phase-complete">Intermediate<span class="phase-days">Days 6–14 ✓</span></div>
+    <div style="width:12px;flex-shrink:0;"></div>
+    <div class="phase-seg phase-complete">Curve / KOP<span class="phase-days">Days 15–22 ✓</span></div>
+    <div style="width:12px;flex-shrink:0;"></div>
+    <div class="phase-seg phase-active">Lateral Drilling<span class="phase-days">Days 23–34 ← NOW</span></div>
+    <div style="width:12px;flex-shrink:0;"></div>
+    <div class="phase-seg phase-pending">Casing & Cement<span class="phase-days">Est. Days 35–38</span></div>
+    <div style="width:12px;flex-shrink:0;"></div>
+    <div class="phase-seg phase-pending">Completions<span class="phase-days">Est. Days 39–47</span></div>
+    <div style="width:12px;flex-shrink:0;"></div>
+    <div class="phase-seg phase-pending">Rig Release<span class="phase-days">Est. Day 48</span></div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="section-label">Key Cost Metrics — Day 29</div>
+  <div class="stat-grid">
+    <div class="stat-card" style="border-color:var(--blue);">
+      <div class="sc-label">Total AFE Budget</div>
+      <div class="sc-value" style="color:var(--navy);">$4.82M</div>
+      <div class="sc-sub">Approved April 9, 2025</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--green);">
+      <div class="sc-label">Actual Spend to Date</div>
+      <div class="sc-value" style="color:var(--green);">$3.41M</div>
+      <div class="sc-sub">70.7% of AFE used</div>
+      <div class="sc-badge" style="background:var(--ltgrn);color:var(--green);">✓ On Track</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--gold);">
+      <div class="sc-label">Committed (Approved Tickets)</div>
+      <div class="sc-value" style="color:var(--amber);">$3.87M</div>
+      <div class="sc-sub">Incl. approved not yet invoiced</div>
+      <div class="sc-badge" style="background:var(--ltamb);color:var(--amber);">80.3% of AFE</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--red);">
+      <div class="sc-label">Forecast Final Cost</div>
+      <div class="sc-value" style="color:var(--red);">$4.97M</div>
+      <div class="sc-sub">+$150K over AFE</div>
+      <div class="sc-badge" style="background:var(--ltred);color:var(--red);">▲ +3.1% Variance</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--navy);">
+      <div class="sc-label">AFE Remaining</div>
+      <div class="sc-value" style="color:var(--navy);">$950K</div>
+      <div class="sc-sub">Days 30–48 to complete</div>
+      <div class="sc-badge" style="background:var(--ltblue);color:var(--blue);">19 days remaining</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row">
+    <!-- Spend Curve -->
+    <div class="chart-card">
+      <div class="chart-title">Cumulative Spend vs. AFE Spend Curve</div>
+      <div class="chart-sub">Daily actual spend (blue) vs. programmed AFE spend curve (dashed) — Days 1 to 34 (estimate)</div>
+      <canvas id="spendCurveChart" height="220"></canvas>
+      <div class="curve-legend">
+        <div class="cl-item"><div class="cl-line" style="background:var(--blue);"></div>Actual Spend</div>
+        <div class="cl-item"><div class="cl-dash" style="border-color:var(--mgray);"></div>AFE Program Curve</div>
+        <div class="cl-item"><div class="cl-line" style="background:rgba(201,168,76,0.6);border:1px dashed var(--gold);"></div>Forecast to Complete</div>
+      </div>
+      <div class="mini-metric">
+        <div class="mm-card">
+          <div class="mm-val">$876</div>
+          <div class="mm-lbl">Actual $/metre</div>
+          <div class="mm-vs" style="color:var(--green);">vs. $942 AFE</div>
+        </div>
+        <div class="mm-card">
+          <div class="mm-val">$117K</div>
+          <div class="mm-lbl">Avg Daily Spend</div>
+          <div class="mm-vs" style="color:var(--green);">vs. $142K AFE</div>
+        </div>
+        <div class="mm-card">
+          <div class="mm-val" style="color:var(--red);">8.2%</div>
+          <div class="mm-lbl">NPT Rate</div>
+          <div class="mm-vs" style="color:var(--red);">vs. 5.0% target</div>
+        </div>
+        <div class="mm-card">
+          <div class="mm-val">287 m</div>
+          <div class="mm-lbl">Metres / Drill Day</div>
+          <div class="mm-vs" style="color:var(--green);">vs. 260 m AFE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donut: Cost by Category -->
+    <div class="chart-card">
+      <div class="chart-title">Spend by Cost Category</div>
+      <div class="chart-sub">Actual spend to date — $3.41M total</div>
+      <canvas id="donutChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- AFE LINE ITEM TABLE -->
+  <div class="table-card">
+    <div class="table-header-row">
+      <div>
+        <div class="chart-title">AFE Line Item Performance — Day 29 of 34</div>
+        <div class="chart-sub">Actual spend vs. AFE budget by cost category. Forecast = projected final cost based on current run rate.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="status-pill" style="background:var(--ltgrn);color:var(--green);">✓ On Budget</span>
+        <span class="status-pill" style="background:var(--ltamb);color:var(--amber);">⚠ Watch</span>
+        <span class="status-pill" style="background:var(--ltred);color:var(--red);">▲ Over AFE</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;min-width:160px;">Cost Category</th>
+          <th>AFE Budget</th>
+          <th>Actual to Date</th>
+          <th>Committed</th>
+          <th>Forecast Final</th>
+          <th>Variance $</th>
+          <th style="min-width:160px;">Budget Used</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="afeTableBody"></tbody>
+      <tfoot id="afeTableFoot"></tfoot>
+    </table>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-row">
+
+    <!-- Alerts -->
+    <div class="chart-card">
+      <div class="section-label">Active Alerts & Flags</div>
+      <div class="alert-item" style="background:var(--ltred);border-left:3px solid var(--red);">
+        <div class="alert-icon">🔴</div>
+        <div>
+          <div class="alert-title" style="color:var(--red);">Drilling Fluids — Trending Over AFE</div>
+          <div class="alert-body">Mud chemical consumption $47K above budget at Day 29. Caused by unexpected shale sections in lateral. Current run rate projects $68K overrun at TD. Consider AFE supplement if lateral extends.</div>
+        </div>
+      </div>
+      <div class="alert-item" style="background:var(--ltred);border-left:3px solid var(--red);">
+        <div class="alert-icon">🔴</div>
+        <div>
+          <div class="alert-title" style="color:var(--red);">NPT Rate Above Target — Day 26</div>
+          <div class="alert-body">8.2% NPT vs. 5.0% target. 14.8 hrs NPT on Day 26 due to stuck pipe event (twist-off risk). Contractor absorbing 6 hrs; operator absorbing 8.8 hrs at standby rate. +$52K impact to date.</div>
+        </div>
+      </div>
+      <div class="alert-item" style="background:var(--ltamb);border-left:3px solid var(--amber);">
+        <div class="alert-icon">🟡</div>
+        <div>
+          <div class="alert-title" style="color:var(--amber);">Directional Drilling — Watch</div>
+          <div class="alert-body">At 81% of AFE with 19% of program remaining. MWD tool failure on Day 24 added 1 rental day (+$8,400). Within contingency but monitoring closely.</div>
+        </div>
+      </div>
+      <div class="alert-item" style="background:var(--ltgrn);border-left:3px solid var(--green);">
+        <div class="alert-icon">🟢</div>
+        <div>
+          <div class="alert-title" style="color:var(--green);">Drilling Contractor — Performing Below Day Rate</div>
+          <div class="alert-body">Rig #427 averaging 287 m/drill day vs. 260 m AFE. 4.2 days ahead of program. Drilling contractor day rate at 78% of AFE with 19% program remaining. On pace to save $84K vs. budget.</div>
+        </div>
+      </div>
+      <div class="alert-item" style="background:var(--ltgrn);border-left:3px solid var(--green);">
+        <div class="alert-icon">🟢</div>
+        <div>
+          <div class="alert-title" style="color:var(--green);">Production Casing — Delivery Confirmed</div>
+          <div class="alert-body">5.5" production casing delivered to location Day 28. Field ticket signed. All 847 joints confirmed. No count discrepancy. Invoice submitted to OpenInvoice — awaiting approval.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily spend bar chart -->
+    <div class="chart-card">
+      <div class="chart-title">Daily Spend vs. AFE Daily Budget</div>
+      <div class="chart-sub">Last 14 days — actual daily cost vs. programmed daily AFE spend</div>
+      <canvas id="dailySpendChart" height="260"></canvas>
+    </div>
+
+  </div>
+
+  <!-- INVOICE PIPELINE -->
+  <div class="table-card">
+    <div class="table-header-row">
+      <div>
+        <div class="chart-title">Invoice & Ticket Pipeline — Active Well</div>
+        <div class="chart-sub">All service company field tickets and invoices in the approval and payment workflow</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;">Service Company</th>
+          <th style="text-align:left;">Service Type</th>
+          <th>Ticket Date</th>
+          <th>Amount</th>
+          <th>Ticket Status</th>
+          <th>Invoice Status</th>
+          <th>Days to Payment</th>
+        </tr>
+      </thead>
+      <tbody id="invoiceBody"></tbody>
+    </table>
+  </div>
+
+  <!-- EMI FOOTER -->
+  <div class="emi-footer">
+    <div>
+      <div class="emi-footer-brand">EMI CostTrack™</div>
+      <div class="emi-footer-tag">Real-time AFE dashboard powered by Enter My Invoice (EMI)</div>
+    </div>
+    <div class="emi-footer-right">Data updates in real time as field tickets are approved &nbsp;|&nbsp; entermyinvoice.com</div>
+  </div>
+
+</div><!-- end container -->
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────
+const afeData = [
+  { cat:"Drilling Contractor (Day Rate)", afe:1420000, actual:1107600, committed:1184000, forecast:1336000 },
+  { cat:"Directional Drilling",           afe:420000,  actual:340200,  committed:372000,  forecast:435000  },
+  { cat:"Drilling Fluids / Mud",          afe:380000,  actual:341000,  committed:368000,  forecast:448000  },
+  { cat:"Cementing",                      afe:185000,  actual:118400,  committed:118400,  forecast:187000  },
+  { cat:"Drill Bits",                     afe:96000,   actual:91200,   committed:91200,   forecast:96000   },
+  { cat:"Casing & Tubulars",             afe:580000,  actual:496800,  committed:552000,  forecast:578000  },
+  { cat:"Rental Tools",                   afe:142000,  actual:106500,  committed:118000,  forecast:139000  },
+  { cat:"Wireline / Logging",             afe:128000,  actual:74240,   committed:74240,   forecast:128000  },
+  { cat:"Fuel",                           afe:68000,   actual:47600,   committed:52000,   forecast:67000   },
+  { cat:"Water Hauling",                  afe:42000,   actual:28560,   committed:28560,   forecast:41000   },
+  { cat:"Waste / Environmental",          afe:38000,   actual:22800,   committed:22800,   forecast:37500   },
+  { cat:"Location / Civil",              afe:95000,   actual:95000,   committed:95000,   forecast:95000   },
+  { cat:"Accommodations / Catering",     afe:76000,   actual:62320,   committed:62320,   forecast:76000   },
+  { cat:"Engineering (Magus)",            afe:148000,  actual:116920,  committed:116920,  forecast:146000  },
+  { cat:"Contingency",                    afe:3000,    actual:0,       committed:0,       forecast:3000    },
+];
+
+// ── AFE TABLE ────────────────────────────────────────────────────────────
+function fmt(n){ return '$'+(n/1000).toFixed(0)+'K'; }
+function fmtFull(n){ return '$'+n.toLocaleString(); }
+
+const tbody = document.getElementById('afeTableBody');
+let totalAFE=0, totalActual=0, totalCommitted=0, totalForecast=0;
+
+afeData.forEach(row => {
+  totalAFE       += row.afe;
+  totalActual    += row.actual;
+  totalCommitted += row.committed;
+  totalForecast  += row.forecast;
+
+  const variance = row.forecast - row.afe;
+  const pctUsed  = (row.actual / row.afe * 100);
+  const overBudget = variance > 0;
+  const watching   = !overBudget && pctUsed > 78;
+  const statusText = overBudget ? '▲ Over AFE' : watching ? '⚠ Watch' : '✓ On Budget';
+  const statusColor= overBudget ? '#C0392B' : watching ? '#D4811A' : '#1A7A3C';
+  const statusBg   = overBudget ? '#FDECEA' : watching ? '#FEF3E2' : '#E6F4EC';
+  const barColor   = overBudget ? '#C0392B' : watching ? '#D4811A' : '#1A7A3C';
+  const varColor   = overBudget ? '#C0392B' : '#1A7A3C';
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${row.cat}</td>
+    <td>${fmt(row.afe)}</td>
+    <td>${fmt(row.actual)}</td>
+    <td>${fmt(row.committed)}</td>
+    <td style="color:${overBudget?'#C0392B':'inherit'};font-weight:${overBudget?700:400};">${fmt(row.forecast)}</td>
+    <td style="color:${varColor};font-weight:700;">${variance>=0?'+':''}${fmt(variance)}</td>
+    <td>
+      <div class="variance-bar-wrap">
+        <div class="variance-bar-bg"><div class="variance-bar-fill" style="width:${Math.min(pctUsed,100)}%;background:${barColor};"></div></div>
+        <span class="variance-pct" style="color:${barColor};">${pctUsed.toFixed(0)}%</span>
+      </div>
+    </td>
+    <td><span class="status-pill" style="background:${statusBg};color:${statusColor};">${statusText}</span></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// Footer totals
+const varTotal = totalForecast - totalAFE;
+document.getElementById('afeTableFoot').innerHTML = `
+  <tr>
+    <td>TOTAL WELL COST</td>
+    <td>${fmt(totalAFE)}</td>
+    <td>${fmt(totalActual)}</td>
+    <td>${fmt(totalCommitted)}</td>
+    <td>${fmt(totalForecast)}</td>
+    <td style="color:${varTotal>0?'#F4A26A':'#4AE080'};">${varTotal>=0?'+':''}${fmt(varTotal)}</td>
+    <td colspan="2">${(totalActual/totalAFE*100).toFixed(1)}% of AFE used — Day 29 of 34</td>
+  </tr>
+`;
+
+// ── INVOICE TABLE ─────────────────────────────────────────────────────────
+const invoices = [
+  { co:"Precision Drilling",   svc:"Day Rate — Day 29",         date:"May 12",  amt:"$23,800", ticket:"✅ Approved",  inv:"📤 Submitted", days:"Est. 31 days" },
+  { co:"Precision Drilling",   svc:"Day Rate — Day 28",         date:"May 11",  amt:"$23,800", ticket:"✅ Approved",  inv:"✅ Approved",   days:"Est. 28 days" },
+  { co:"Advantage Directional",svc:"MWD/LWD — Day 28-29",       date:"May 11",  amt:"$14,200", ticket:"✅ Approved",  inv:"📤 Submitted", days:"Est. 33 days" },
+  { co:"Newpark Drilling Fluids",svc:"Mud Chemicals — Day 28",   date:"May 11",  amt:"$18,640", ticket:"✅ Approved",  inv:"✅ Approved",   days:"Est. 29 days" },
+  { co:"BJ Energy Solutions",  svc:"Rental Tools — Day 27-29",  date:"May 10",  amt:"$8,400",  ticket:"✅ Approved",  inv:"📤 Submitted", days:"Est. 34 days" },
+  { co:"Calfrac Well Services","svc":"Cement — Intermediate Csg",date:"May 3",   amt:"$42,150", ticket:"✅ Approved",  inv:"✅ Approved",   days:"Est. 18 days" },
+  { co:"Eagle Ford Casing",    svc:"5.5\" Production Casing",   date:"May 11",  amt:"$118,400",ticket:"✅ Approved",  inv:"📤 Submitted", days:"Est. 35 days" },
+  { co:"Tidewater Midstream",  svc:"Fuel Delivery — 8,400L",    date:"May 10",  amt:"$12,852", ticket:"✅ Approved",  inv:"✅ Approved",   days:"Est. 22 days" },
+  { co:"Newpark Drilling Fluids",svc:"Mud Engineer Day Rate",    date:"May 9",   amt:"$2,100",  ticket:"⏳ Pending",   inv:"— Not Submitted", days:"—" },
+  { co:"Advantage Directional",svc:"Directional Driller — Day 29",date:"May 12",amt:"$2,400",  ticket:"⏳ Pending",   inv:"— Not Submitted", days:"—" },
+];
+
+const invBody = document.getElementById('invoiceBody');
+invoices.forEach((r,i) => {
+  const tr = document.createElement('tr');
+  const pendingTicket = r.ticket.includes('Pending');
+  tr.innerHTML = `
+    <td style="text-align:left;font-weight:600;">${r.co}</td>
+    <td style="text-align:left;color:#555;font-weight:400;">${r.svc}</td>
+    <td>${r.date}</td>
+    <td style="font-weight:700;">${r.amt}</td>
+    <td style="color:${pendingTicket?'#D4811A':'#1A7A3C'};font-weight:600;">${r.ticket}</td>
+    <td style="color:${r.inv.includes('Not')?'#aab':r.inv.includes('Approved')?'#1A7A3C':'#2E75B6'};font-weight:600;">${r.inv}</td>
+    <td style="color:${r.days==='—'?'#aab':'#1A3A5C'};font-weight:${r.days==='—'?400:600};">${r.days}</td>
+  `;
+  invBody.appendChild(tr);
+});
+
+// ── SPEND CURVE CHART ──────────────────────────────────────────────────────
+const days = Array.from({length:34},(_,i)=>i+1);
+
+// AFE programmed curve (cumulative, S-curve shape)
+const afeTotal = 4820000;
+function sCurve(d, total, rampStart=3, rampEnd=30) {
+  const x = (d - rampStart) / (rampEnd - rampStart);
+  const s = 1 / (1 + Math.exp(-8 * (x - 0.5)));
+  return Math.round(total * Math.max(0, Math.min(1, s)));
+}
+const afeCurve = days.map(d => sCurve(d, afeTotal));
+
+// Actual (days 1-29)
+const actualDaily = [
+  52000,88000,102000,118000,105000, // surface hole — days 1-5
+  95000,142000,158000,168000,145000,130000,122000,115000,108000, // intermediate — days 6-14
+  138000,162000,172000,158000,145000,132000,125000,118000, // curve — days 15-22
+  125000,135000,148000,128000,105000,98000,95000 // lateral so far — days 23-29
+];
+const actualCumulative = actualDaily.map((v,i) => actualDaily.slice(0,i+1).reduce((a,b)=>a+b,0));
+
+// Forecast (days 30-34)
+const forecastFromDay29 = actualCumulative[28];
+const forecastRemaining = [forecastFromDay29+145000, forecastFromDay29+285000, forecastFromDay29+380000, forecastFromDay29+480000, forecastFromDay29+560000];
+
+const actualData = days.map((d,i) => i < 29 ? actualCumulative[i] : null);
+const forecastData = days.map((d,i) => {
+  if(i < 28) return null;
+  if(i === 28) return actualCumulative[28];
+  return forecastRemaining[i-29];
+});
+
+const ctx1 = document.getElementById('spendCurveChart').getContext('2d');
+new Chart(ctx1, {
+  type: 'line',
+  data: {
+    labels: days.map(d => 'Day '+d),
+    datasets: [
+      { label:'AFE Program', data: afeCurve, borderColor:'#CCCCCC', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, tension:0.4 },
+      { label:'Actual Spend', data: actualData, borderColor:'#2E75B6', borderWidth:2.5, pointRadius:0, fill:{ target:'origin', above:'rgba(46,117,182,0.06)' }, tension:0.3 },
+      { label:'Forecast', data: forecastData, borderColor:'rgba(201,168,76,0.8)', borderDash:[4,3], borderWidth:2, pointRadius:0, fill:false, tension:0.3 },
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ ticks:{ font:{size:9}, maxTicksLimit:12, color:'#888' }, grid:{ color:'#eee' } },
+      y:{
+        ticks:{
+          font:{size:9}, color:'#888',
+          callback: v => '$'+(v/1000000).toFixed(1)+'M'
+        },
+        grid:{ color:'#eee' }
+      }
+    },
+    interaction:{ mode:'index', intersect:false }
+  }
+});
+
+// ── DONUT CHART ────────────────────────────────────────────────────────────
+const donutLabels = ['Drilling Contractor','Directional','Mud/Fluids','Cementing','Casing/Tubulars','Bits','Rentals','Wireline','Other'];
+const donutVals   = [1107600,340200,341000,118400,496800,91200,106500,74240,(22800+47600+28560+62320+116920)];
+const donutColors = ['#1A3A5C','#2E75B6','#C9A84C','#1A7A3C','#5C3A1A','#D4811A','#6B2E99','#2E8B8B','#888888'];
+
+const ctx2 = document.getElementById('donutChart').getContext('2d');
+new Chart(ctx2, {
+  type: 'doughnut',
+  data: {
+    labels: donutLabels,
+    datasets: [{ data: donutVals, backgroundColor: donutColors, borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:true,
+    cutout:'58%',
+    plugins:{
+      legend:{ position:'right', labels:{ font:{size:9}, boxWidth:10, padding:6 } },
+      tooltip:{ callbacks:{ label: ctx => ' $'+(ctx.raw/1000).toFixed(0)+'K ('+((ctx.raw/3410000)*100).toFixed(1)+'%)' } }
+    }
+  }
+});
+
+// ── DAILY SPEND CHART ──────────────────────────────────────────────────────
+const last14Actual = actualDaily.slice(-14);
+const last14Labels = Array.from({length:14},(_,i)=>'Day '+(16+i));
+const last14AFE    = last14Labels.map((_,i) => {
+  const dayNum = 16+i;
+  return Math.round((afeCurve[dayNum-1] - afeCurve[dayNum-2]) || 142000);
+});
+
+const ctx3 = document.getElementById('dailySpendChart').getContext('2d');
+new Chart(ctx3, {
+  type: 'bar',
+  data: {
+    labels: last14Labels,
+    datasets: [
+      { label:'Actual Daily Spend', data: last14Actual, backgroundColor: last14Actual.map((v,i)=>v>last14AFE[i]?'rgba(192,57,43,0.75)':'rgba(46,117,182,0.75)'), borderRadius:3 },
+      { label:'AFE Daily Budget', data: last14AFE, type:'line', borderColor:'#C9A84C', borderDash:[4,3], borderWidth:2, pointRadius:0, fill:false }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{ legend:{ display:true, labels:{ font:{size:9}, boxWidth:10 } } },
+    scales:{
+      x:{ ticks:{ font:{size:9}, color:'#888' }, grid:{ display:false } },
+      y:{ ticks:{ font:{size:9}, color:'#888', callback: v=>'$'+(v/1000).toFixed(0)+'K' }, grid:{ color:'#eee' } }
+    }
+  }
+});
+
+// ── LIVE DATE ──────────────────────────────────────────────────────────────
+document.getElementById('liveDate').textContent = 'Updated: ' + new Date().toLocaleString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+</script>
+</body>
+</html>

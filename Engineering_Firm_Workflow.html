@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Firm Drilling Program Workflow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; padding: 32px 24px; }
+
+  h1 { font-size: 22px; font-weight: 800; color: #1A3A5C; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #777; margin-bottom: 28px; }
+
+  /* Phase columns */
+  .workflow { display: flex; gap: 0; align-items: flex-start; }
+  .phase-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+
+  /* Phase header */
+  .phase-header {
+    width: 100%;
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #fff;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+  }
+  .ph1 { background: #1A3A5C; }
+  .ph2 { background: #1A5C3A; }
+  .ph3 { background: #5C3A1A; }
+  .ph4 { background: #3A1A5C; }
+
+  .phase-sub {
+    font-size: 9px;
+    font-weight: 500;
+    opacity: 0.85;
+    display: block;
+    margin-top: 2px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Step cards */
+  .steps { width: 100%; background: #fff; border: 1px solid #dde; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; min-height: 600px; }
+
+  .step {
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.4;
+    position: relative;
+    border-left: 3px solid;
+  }
+  .step-num {
+    font-size: 9px;
+    font-weight: 800;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .step-title { font-weight: 700; font-size: 11px; display: block; margin-bottom: 2px; }
+  .step-body { font-size: 10px; color: #555; line-height: 1.4; }
+
+  /* Phase 1 - Navy */
+  .s1 { background: #EEF2F7; border-color: #1A3A5C; }
+  .s1 .step-title { color: #1A3A5C; }
+
+  /* Phase 2 - Green */
+  .s2 { background: #EEF7F2; border-color: #1A6B3C; }
+  .s2 .step-title { color: #1A5C3A; }
+
+  /* Phase 3 - Orange/Brown */
+  .s3 { background: #F7F2EE; border-color: #C9A84C; }
+  .s3 .step-title { color: #5C3A1A; }
+
+  /* Phase 4 - Purple */
+  .s4 { background: #F2EEF7; border-color: #3A1A5C; }
+  .s4 .step-title { color: #3A1A5C; }
+
+  /* EMI highlight */
+  .emi {
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 9.5px;
+    margin-top: 4px;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    background: #FFFBEA;
+    border: 1px dashed #C9A84C;
+    color: #7A5C00;
+    line-height: 1.3;
+  }
+  .emi-icon { font-size: 10px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Arrow connectors between phases */
+  .phase-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    flex-shrink: 0;
+    align-self: stretch;
+    padding-top: 50px;
+  }
+  .arrow-right {
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 12px solid #aab;
+  }
+
+  /* Stakeholder flow */
+  .stakeholder-row {
+    display: flex;
+    gap: 0;
+    margin-top: 16px;
+    margin-bottom: 24px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dde;
+  }
+  .sk-cell {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 10px;
+    text-align: center;
+    border-right: 1px solid #dde;
+  }
+  .sk-cell:last-child { border-right: none; }
+  .sk-label { font-weight: 700; font-size: 10px; display: block; margin-bottom: 3px; }
+  .sk-detail { font-size: 9.5px; color: #666; line-height: 1.3; }
+  .sk1 { background: #EEF2F7; }
+  .sk2 { background: #EEF7F2; }
+  .sk3 { background: #F7F2EE; }
+  .sk4 { background: #F2EEF7; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #dde;
+    align-items: center;
+  }
+  .leg { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #444; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .leg-emi { width: 28px; height: 10px; border-radius: 2px; background: #FFFBEA; border: 1px dashed #C9A84C; flex-shrink: 0; }
+
+  /* EMI summary bar */
+  .emi-bar {
+    background: #1A3A5C;
+    color: #fff;
+    border-radius: 6px;
+    padding: 12px 18px;
+    margin-top: 16px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .emi-bar-label { font-weight: 800; font-size: 13px; color: #C9A84C; flex-shrink: 0; }
+  .emi-bar-text { line-height: 1.5; }
+
+  /* Time axis */
+  .time-axis {
+    display: flex;
+    margin-bottom: 6px;
+    gap: 0;
+  }
+  .ta-seg {
+    flex: 1;
+    text-align: center;
+    font-size: 9px;
+    color: #888;
+    padding: 0 4px;
+    border-top: 2px solid #ccc;
+    padding-top: 4px;
+  }
+  .ta-conn { width: 28px; flex-shrink: 0; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1A3A5C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 8px;
+    padding-left: 4px;
+    border-left: 3px solid #C9A84C;
+  }
+</style>
+</head>
+<body>
+
+<h1>Engineering Firm Drilling Program — Complete Workflow</h1>
+<p class="subtitle">From engagement through well completion &nbsp;|&nbsp; with EMI digital cost management touchpoints highlighted</p>
+
+<!-- Time axis -->
+<div class="time-axis">
+  <div class="ta-seg">Pre-Spud<br>(Weeks before rig moves)</div>
+  <div class="ta-conn"></div>
+  <div class="ta-seg">Active Drilling<br>(Rig on location — 15 to 90+ days)</div>
+  <div class="ta-conn"></div>
+  <div class="ta-seg">Invoice Management<br>(Runs concurrently with drilling)</div>
+  <div class="ta-conn"></div>
+  <div class="ta-seg">Well Completion<br>(Post-TD)</div>
+</div>
+
+<!-- Main workflow columns -->
+<div class="workflow">
+
+  <!-- PHASE 1 -->
+  <div class="phase-col">
+    <div class="phase-header ph1">Phase 1<span class="phase-sub">Pre-Spud / Office</span></div>
+    <div class="steps">
+
+      <div class="step s1">
+        <span class="step-num">Step 1.1</span>
+        <span class="step-title">Scope & Engagement</span>
+        <span class="step-body">Operator hires engineering firm. Scope defined — single well, multi-well program, or retainer. Fee structure agreed (supervisor day rate + engineering hours).</span>
+      </div>
+
+      <div class="step s1">
+        <span class="step-num">Step 1.2</span>
+        <span class="step-title">Well Design</span>
+        <span class="step-body">Casing design, bit program, directional plan, mud program, completions design. Every design decision drives an AFE cost estimate.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Historical cost data from past wells populates AFE line items with actual rates — not memory or old spreadsheets.</div>
+      </div>
+
+      <div class="step s1">
+        <span class="step-num">Step 1.3</span>
+        <span class="step-title">AFE Preparation & Approval</span>
+        <span class="step-body">All cost estimates assembled into the Authority for Expenditure. Submitted to operator for management/board approval before any work begins. The AFE is the financial contract the engineering firm is held to.</span>
+      </div>
+
+      <div class="step s1">
+        <span class="step-num">Step 1.4</span>
+        <span class="step-title">Service Company Selection & Contract Negotiation</span>
+        <span class="step-body">Engineering firm recommends and selects: drilling contractor, directional company, mud company, cement contractor, rental tools, wireline. Negotiates day rates and pricing on operator's behalf.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Structured historical rate data gives engineering firm documented basis for negotiations — actual vs. quoted rates from prior wells.</div>
+      </div>
+
+      <div class="step s1">
+        <span class="step-num">Step 1.5</span>
+        <span class="step-title">Regulatory Submissions</span>
+        <span class="step-body">Well licence applications, H₂S EPZs, surface location approvals, environmental assessments. All required before spud authorization.</span>
+      </div>
+
+      <div class="step s1">
+        <span class="step-num">Step 1.6</span>
+        <span class="step-title">Drilling Program Preparation</span>
+        <span class="step-body">Detailed drilling programs written for each well phase — surface hole, intermediate, curve, lateral. Distributed to drilling contractor and all service companies before rig spud.</span>
+      </div>
+
+      <div class="step s1">
+        <span class="step-num">Step 1.7</span>
+        <span class="step-title">Rig & Service Company Mobilization</span>
+        <span class="step-body">Engineering firm coordinates rig move scheduling, service company mobilization timing, and pre-spud wellsite preparation. Company man assigned and deployed to location.</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR -->
+  <div class="phase-connector"><div class="arrow-right"></div></div>
+
+  <!-- PHASE 2 -->
+  <div class="phase-col">
+    <div class="phase-header ph2">Phase 2<span class="phase-sub">Active Drilling / Field</span></div>
+    <div class="steps">
+
+      <div class="step s2">
+        <span class="step-num">Step 2.1</span>
+        <span class="step-title">Wellsite Supervision (24hr Coverage)</span>
+        <span class="step-body">Engineering firm company man on location — single supervisor on day shift or two rotating 12-hr shifts on complex wells. Every wellsite decision flows through them.</span>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.2</span>
+        <span class="step-title">DDR Review & Rig Status Approval</span>
+        <span class="step-body">Company man reviews drilling contractor's Daily Drilling Report each morning. Verifies every hourly status code — drilling, tripping, waiting, NPT. Approves or disputes. On a $25K/day rig, a disputed 4-hr status code is a $4,000 decision.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: DDR captured digitally. Status codes locked in real time. Company man approves on mobile — dispute-proof timestamp on every decision.</div>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.3</span>
+        <span class="step-title">Third-Party Field Ticket Review & Signature</span>
+        <span class="step-body">Every service company (mud, directional, cement, wireline, rentals, fuel, water, waste) generates a ticket for their work. Company man reviews each one and signs as operator's authorized representative. 8–15 tickets/day on a busy well.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Service reps submit tickets digitally. Company man reviews and digitally signs in seconds — timestamped, geolocation-tagged, immediately transmitted. No paper, no lag.</div>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.4</span>
+        <span class="step-title">Daily Cost Compilation & AFE Update</span>
+        <span class="step-body">Company man compiles all approved costs, assigns each to the correct AFE line item, calculates actual vs. budget. Done in a spreadsheet each evening — currently takes 45–90 minutes per day.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Costs auto-coded to AFE lines the moment tickets are approved. Dashboard updates in real time. Zero manual compilation. Company man gets that 60–90 minutes back every day.</div>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.5</span>
+        <span class="step-title">Daily Reporting to Operator</span>
+        <span class="step-body">Compiled cost summary plus drilling progress update sent to operator's drilling engineer and finance team — typically by email before 8am. Primary window into well performance.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Operator accesses live dashboard at any time. No morning report required. Operator sees costs updating in real time throughout the day.</div>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.6</span>
+        <span class="step-title">Real-Time Engineering Decisions</span>
+        <span class="step-body">Formation tops, bit performance, mud weight adjustments, casing setting depths, directional corrections. Each technical decision may have cost implications requiring AFE flag and operator notification.</span>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.7</span>
+        <span class="step-title">Service Company Coordination</span>
+        <span class="step-body">Engineering firm coordinates arrival/departure timing for all service companies — cementing crews, wireline runs, perforating, testing. Ensures right people and equipment are on location at the right time to avoid standby charges.</span>
+      </div>
+
+      <div class="step s2">
+        <span class="step-num">Step 2.8</span>
+        <span class="step-title">AFE Variance Management</span>
+        <span class="step-body">When costs trend over a line item — extra mud chemicals, additional cement job, fishing tools after twist-off — engineering firm identifies early, communicates to operator, determines if AFE supplement required. Late identification = costly delays.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Automatic variance alerts fire when a cost category approaches its AFE limit — before it becomes a surprise. Operator can authorize a supplement while the well is still drilling.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR -->
+  <div class="phase-connector"><div class="arrow-right"></div></div>
+
+  <!-- PHASE 3 -->
+  <div class="phase-col">
+    <div class="phase-header ph3">Phase 3<span class="phase-sub">Invoice Management (Concurrent)</span></div>
+    <div class="steps">
+
+      <div class="step s3">
+        <span class="step-num">Step 3.1</span>
+        <span class="step-title">Field Ticket Collection & Transmission</span>
+        <span class="step-body">Signed paper tickets from every service company must travel from the rig to the operator's office — scanned, photographed, or physically mailed. Creates a constant administrative loop between wellsite and back office.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Approved digital tickets are instantly available to the operator's AP team the moment the company man signs. Zero transmission delay. Nothing lost in transit.</div>
+      </div>
+
+      <div class="step s3">
+        <span class="step-num">Step 3.2</span>
+        <span class="step-title">Invoice Review & Approval Routing</span>
+        <span class="step-body">Service companies convert field tickets to invoices and submit to operator's AP portal. Engineering firm reviews each invoice against the original field ticket — confirming quantities, rates, and AFE coding are correct — before routing for payment.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Approved ticket auto-converts to correctly formatted invoice. Rates and coding pre-populated from the approved ticket. Engineering firm reviews exceptions only, not every line.</div>
+      </div>
+
+      <div class="step s3">
+        <span class="step-num">Step 3.3</span>
+        <span class="step-title">Multi-Portal Management</span>
+        <span class="step-body">Different operator clients use different AP portals — OpenInvoice, SAP Ariba, Coupa, Jobutrax, GEP Smart. Engineering firm managing multiple operator programs logs into multiple portals in different formats with different workflows. Significant administrative overhead.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Single submission platform handles formatting and routing to whichever portal each operator uses. One workflow regardless of how many operator clients or portals.</div>
+      </div>
+
+      <div class="step s3">
+        <span class="step-num">Step 3.4</span>
+        <span class="step-title">Dispute Resolution</span>
+        <span class="step-body">When a service company disputes a rate or quantity — or operator AP flags an invoice — engineering firm is the intermediary. Pulls original field ticket, verifies what was approved, resolves discrepancy. Paper-based tickets make this a slow, manual investigation.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Digital timestamp and real-time sign-off create an indisputable contemporaneous record. Most disputes eliminated at source. Those that arise resolve in minutes, not weeks.</div>
+      </div>
+
+      <div class="step s3">
+        <span class="step-num">Step 3.5</span>
+        <span class="step-title">Service Company Payment Tracking</span>
+        <span class="step-body">Engineering firm tracks which service company invoices have been paid and which remain outstanding — not because they cut the cheques, but because unpaid service companies call the company man, not the operator's AP team. Managing that communication is part of the service.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Approval-to-submission pipeline visible in real time. Engineering firm can see exact status of every invoice — submitted, approved, pending, paid — without phone calls.</div>
+      </div>
+
+      <div class="step s3">
+        <span class="step-num">Step 3.6</span>
+        <span class="step-title">Engineering Firm's Own Fee Submission</span>
+        <span class="step-body">Magus-style firms charge the operator for their own services — field supervisor day rates, engineering hours, project management fees. These are tracked and submitted separately from third-party service costs, and must also be coded to the correct AFE lines.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Engineering firm's own time and fees tracked in the same platform — submitted against the AFE alongside all third-party costs for a complete program cost picture.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR -->
+  <div class="phase-connector"><div class="arrow-right"></div></div>
+
+  <!-- PHASE 4 -->
+  <div class="phase-col">
+    <div class="phase-header ph4">Phase 4<span class="phase-sub">Well Completion / Post-TD</span></div>
+    <div class="steps">
+
+      <div class="step s4">
+        <span class="step-num">Step 4.1</span>
+        <span class="step-title">Final Cost Compilation & AFE Reconciliation</span>
+        <span class="step-body">All costs compiled into final well cost summary — every ticket, every invoice, every AFE line — reconciled against the original budget. On paper-based systems with 300–500 tickets across 30–90 days, this takes 5–10 business days.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Automated reconciliation report generated at well TD. Every ticket matched to every invoice matched to every AFE line. Ready in minutes. Complete audit trail included.</div>
+      </div>
+
+      <div class="step s4">
+        <span class="step-num">Step 4.2</span>
+        <span class="step-title">AFE Supplement Documentation</span>
+        <span class="step-body">Any costs exceeding AFE lines documented with justification — what happened, why it was necessary, who authorized it. Part of the operator's permanent capital accounting record and any future regulatory or audit requirement.</span>
+      </div>
+
+      <div class="step s4">
+        <span class="step-num">Step 4.3</span>
+        <span class="step-title">Well File Compilation</span>
+        <span class="step-body">Complete well file assembled — all DDRs, field tickets, invoices, AFE reconciliation, mud reports, cement records, directional surveys, HSE records — and delivered to operator as their permanent well record.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: All digital records automatically organized and exportable as a complete well file. No manual assembly. Fully audit-ready from day one.</div>
+      </div>
+
+      <div class="step s4">
+        <span class="step-num">Step 4.4</span>
+        <span class="step-title">Post-Well Performance Review</span>
+        <span class="step-body">Engineering firm reviews what went over budget, under budget, which service companies performed well, and what they would do differently. This data should improve the next AFE estimate and the next contract negotiation.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Structured performance data from every well — cost per metre, NPT rate, AFE accuracy by line, vendor rate vs. actual — automatically compiled. Every well makes the next bid sharper.</div>
+      </div>
+
+      <div class="step s4">
+        <span class="step-num">Step 4.5</span>
+        <span class="step-title">Operator Cost Report Delivery</span>
+        <span class="step-body">Final well cost report delivered to operator — actual vs. AFE by line item with variance explanations. This is the primary evidence of the engineering firm's cost management performance and the foundation for contract renewal.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Report generated automatically from the digital record. Professionally formatted, complete, and delivered at well TD — not weeks later. Demonstrates cost management discipline to the operator.</div>
+      </div>
+
+      <div class="step s4">
+        <span class="step-num">Step 4.6</span>
+        <span class="step-title">Service Company Rate Leverage for Next Well</span>
+        <span class="step-body">Engineering firms that ran clean, fast approval cycles on this well have earned goodwill with service companies. Faster payment cycle means service companies prefer their programs — and may offer preferred pricing or priority mobilization on the next job.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Engineering firm can document payment cycle performance — average days from ticket approval to payment — as evidence in the next contract negotiation. "Our programs pay in 35 days. The market average is 60."</div>
+      </div>
+
+      <div class="step s4">
+        <span class="step-num">Step 4.7</span>
+        <span class="step-title">Lessons Learned → Next AFE</span>
+        <span class="step-body">Post-well data feeds directly back into the pre-spud process for the next well — closing the continuous improvement loop. Better AFE estimates, better vendor negotiations, better program design.</span>
+        <div class="emi"><span class="emi-icon">⚡</span>EMI: Historical cost database grows with every well. Engineering firm builds a proprietary cost intelligence asset that compounds in value over time — improving every future estimate, negotiation, and bid.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end workflow -->
+
+<!-- Stakeholder row -->
+<div class="section-title">Who is Involved at Each Phase</div>
+<div class="stakeholder-row">
+  <div class="sk-cell sk1">
+    <span class="sk-label" style="color:#1A3A5C;">Phase 1 — Pre-Spud</span>
+    <span class="sk-detail">Engineering firm (office)<br>Operator drilling engineer<br>Operator AFE owner<br>Regulatory bodies<br>Service company commercial teams</span>
+  </div>
+  <div class="sk-cell sk2">
+    <span class="sk-label" style="color:#1A5C3A;">Phase 2 — Active Drilling</span>
+    <span class="sk-detail">Engineering firm company man (on location)<br>Engineering firm project manager (office)<br>Drilling contractor toolpush<br>All service company field reps<br>Operator drilling engineer</span>
+  </div>
+  <div class="sk-cell sk3">
+    <span class="sk-label" style="color:#5C3A1A;">Phase 3 — Invoice Management</span>
+    <span class="sk-detail">Engineering firm back office<br>Service company billing teams<br>Operator AP / finance<br>Operator AFE owner<br>Engineering firm company man (dispute resolution)</span>
+  </div>
+  <div class="sk-cell sk4">
+    <span class="sk-label" style="color:#3A1A5C;">Phase 4 — Well Completion</span>
+    <span class="sk-detail">Engineering firm project manager<br>Operator drilling engineer<br>Operator finance / treasury<br>Engineering firm (next well planning)<br>Service companies (performance review)</span>
+  </div>
+</div>
+
+<!-- EMI summary bar -->
+<div class="emi-bar">
+  <span class="emi-bar-label">⚡ EMI</span>
+  <span class="emi-bar-text">EMI touchpoints appear across all four phases — replacing paper tickets with digital capture, manual spreadsheets with real-time AFE dashboards, emailed reports with live operator access, and week-long reconciliations with automated well cost reports. The administrative half of the engineering firm's workflow becomes largely automated. Their people spend more time on technical decisions — and less time on paperwork.</span>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:#1A3A5C;"></div>Phase 1 — Pre-Spud</div>
+  <div class="leg"><div class="leg-dot" style="background:#1A5C3A;"></div>Phase 2 — Active Drilling</div>
+  <div class="leg"><div class="leg-dot" style="background:#C9A84C;"></div>Phase 3 — Invoice Management</div>
+  <div class="leg"><div class="leg-dot" style="background:#3A1A5C;"></div>Phase 4 — Well Completion</div>
+  <div class="leg"><div class="leg-emi"></div>EMI platform touchpoint</div>
+</div>
+
+</body>
+</html>

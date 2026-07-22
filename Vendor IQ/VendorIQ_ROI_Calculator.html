@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMI VendorIQ™ — ROI & Pricing Calculator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3A5C;--blue:#2E75B6;--ltblue:#D5E8F0;--dkblue:#0F2540;
+  --gold:#C9A84C;--ltgold:#FFF8E7;--dkgold:#9A7520;
+  --green:#1A7A3C;--ltgrn:#E6F4EC;
+  --red:#C0392B;--ltred:#FDECEA;
+  --amber:#D4811A;--ltamb:#FEF3E2;
+  --purple:#6B3FA0;--ltpur:#F0EAF8;
+  --teal:#1A7A7A;--ltteal:#E6F4F4;
+  --lgray:#F4F5F7;--mgray:#DDE1E9;--dgray:#4A4A4A;--white:#FFFFFF;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#ECEEF2;color:var(--navy);min-height:100vh;font-size:13px}
+
+/* TOP BAR */
+.topbar{background:var(--dkblue);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:3px solid var(--gold)}
+.tb-brand{font-size:20px;font-weight:900;color:var(--gold);letter-spacing:.5px}
+.tb-sub{font-size:10px;color:#778;margin-top:2px}
+.tb-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tb-badge{background:rgba(201,168,76,.15);border:1px solid var(--gold);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--gold)}
+.currency-toggle{display:flex;border:1px solid var(--gold);border-radius:6px;overflow:hidden}
+.cur-btn{padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--gold);transition:all .15s}
+.cur-btn.active{background:var(--gold);color:var(--dkblue)}
+
+/* LAYOUT */
+.main{max-width:1300px;margin:0 auto;padding:22px 24px;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+.left-col{display:flex;flex-direction:column;gap:16px}
+.right-col{display:flex;flex-direction:column;gap:16px;position:sticky;top:20px}
+
+/* SECTION LABEL */
+.sec-lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--mgray)}
+
+/* CARDS */
+.card{background:var(--white);border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.card-title{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:3px}
+.card-sub{font-size:10px;color:#888;margin-bottom:16px;line-height:1.5}
+
+/* FORM ELEMENTS */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.3px}
+.field input,.field select{padding:8px 10px;border:1px solid var(--mgray);border-radius:6px;font-size:12px;color:var(--navy);background:var(--white);width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:var(--blue)}
+.field .hint{font-size:9px;color:#999;margin-top:2px}
+
+/* TIER BUTTONS */
+.tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tier-btn{padding:10px 8px;border:2px solid var(--mgray);border-radius:8px;background:var(--white);cursor:pointer;text-align:center;transition:all .15s}
+.tier-btn:hover{border-color:var(--blue)}
+.tier-btn.active{border-color:var(--blue);background:var(--ltblue)}
+.tier-btn .t-name{font-size:11px;font-weight:800;color:var(--navy)}
+.tier-btn .t-wells{font-size:9px;color:#888;margin:2px 0}
+.tier-btn .t-price{font-size:13px;font-weight:900;color:var(--blue)}
+.tier-btn.active .t-name{color:var(--blue)}
+
+/* SLIDER */
+.slider-wrap{margin-bottom:14px}
+.slider-lbl{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.slider-lbl span{font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.3px}
+.slider-lbl .slider-val{font-size:14px;font-weight:900;color:var(--navy);background:var(--lgray);padding:2px 10px;border-radius:5px}
+input[type=range]{width:100%;height:5px;-webkit-appearance:none;appearance:none;background:var(--mgray);border-radius:3px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.slider-range{display:flex;justify-content:space-between;font-size:9px;color:#aaa;margin-top:4px}
+
+/* TOGGLE SWITCH */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--lgray)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-lbl{font-size:11px;font-weight:600;color:var(--navy)}
+.toggle-sub{font-size:9px;color:#888;margin-top:1px}
+.toggle{position:relative;display:inline-block;width:38px;height:20px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--mgray);border-radius:20px;transition:.2s}
+.toggle-slider:before{content:"";position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s}
+input:checked+.toggle-slider{background:var(--blue)}
+input:checked+.toggle-slider:before{transform:translateX(18px)}
+.add-price{font-size:11px;font-weight:700;color:var(--blue)}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--lgray);border-radius:8px;padding:12px 14px;border-top:3px solid}
+.kpi-lbl{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.kpi-val{font-size:22px;font-weight:900;line-height:1;margin-bottom:2px}
+.kpi-sub{font-size:9px;color:#888}
+
+/* ROI PANEL */
+.roi-hero{background:linear-gradient(135deg,var(--navy),var(--dkblue));border-radius:10px;padding:22px;color:white;margin-bottom:14px;border:2px solid var(--gold)}
+.roi-hero-label{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.roi-hero-val{font-size:52px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:4px}
+.roi-hero-sub{font-size:11px;color:#aab;line-height:1.5}
+.roi-bar-wrap{margin:14px 0}
+.roi-bar-track{height:10px;background:rgba(255,255,255,.15);border-radius:5px;overflow:hidden;margin-top:4px}
+.roi-bar-fill{height:100%;background:var(--gold);border-radius:5px;transition:width .5s}
+.roi-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.roi-item{background:rgba(255,255,255,.07);border-radius:6px;padding:10px 12px;border:1px solid rgba(255,255,255,.1)}
+.roi-item-lbl{font-size:9px;color:#889;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.roi-item-val{font-size:14px;font-weight:800;color:var(--white)}
+.roi-item-val.gold{color:var(--gold)}
+.roi-item-val.green{color:#5DE89A}
+
+/* SUMMARY TABLE */
+.sum-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px}
+.sum-table tr{border-bottom:1px solid var(--mgray)}
+.sum-table tr:last-child{border-bottom:2px solid var(--navy)}
+.sum-table td{padding:7px 4px}
+.sum-table td:last-child{text-align:right;font-weight:700}
+.sum-table .total-row td{font-weight:900;font-size:13px;color:var(--navy);padding-top:9px}
+.sum-table .sub-row td{color:#888;font-size:10px}
+
+/* CLIENT INPUT */
+.client-input-wrap{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--ltgold);border-radius:8px;border:1px solid #E8D080}
+.client-input-wrap label{font-size:10px;font-weight:700;color:var(--dkgold);white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.client-input-wrap input{border:1px solid #E8D080;background:white;border-radius:5px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);flex:1}
+.client-input-wrap input:focus{outline:none;border-color:var(--gold)}
+
+/* PRINT BUTTON */
+.print-btn{width:100%;padding:12px;background:var(--gold);color:var(--dkblue);border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;letter-spacing:.3px;transition:opacity .15s}
+.print-btn:hover{opacity:.88}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--mgray);margin:6px 0 14px}
+
+/* PILLS */
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700}
+.pill-green{background:var(--ltgrn);color:var(--green)}
+.pill-gold{background:var(--ltgold);color:var(--dkgold)}
+.pill-blue{background:var(--ltblue);color:var(--blue)}
+
+/* SRED SECTION */
+.sred-banner{background:linear-gradient(135deg,#1A3A5C,#0F2540);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px;border-left:4px solid var(--gold)}
+.sred-icon{font-size:22px}
+.sred-title{font-size:12px;font-weight:800;color:var(--gold)}
+.sred-body{font-size:10px;color:#aab;margin-top:2px;line-height:1.4}
+
+/* DISCLAIMER */
+.disclaimer{font-size:9px;color:#aaa;line-height:1.5;padding:10px 14px;background:var(--lgray);border-radius:6px;margin-top:6px}
+
+/* HIDDEN IN SCREEN */
+@media print{body{background:white}.topbar,.print-btn{display:none}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <div class="tb-brand">EMI VendorIQ™</div>
+    <div class="tb-sub">Supplier Intelligence Platform — ROI & Pricing Calculator</div>
+  </div>
+  <div class="tb-right">
+    <div class="currency-toggle">
+      <button class="cur-btn active" id="btn-cad" onclick="setCurrency('CAD')">CAD</button>
+      <button class="cur-btn" id="btn-usd" onclick="setCurrency('USD')">USD</button>
+    </div>
+    <div class="tb-badge" id="currency-label">Canadian Dollar (CAD)</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main">
+
+  <!-- ═══ LEFT COLUMN — INPUTS ═══ -->
+  <div class="left-col">
+
+    <!-- CLIENT NAME -->
+    <div class="client-input-wrap">
+      <label>Prepared for</label>
+      <input type="text" id="clientName" placeholder="Operator / Company Name" />
+    </div>
+
+    <!-- 1. OPERATOR PROFILE -->
+    <div class="card">
+      <div class="card-title">1 — Operator Profile</div>
+      <div class="card-sub">Define the scope of your drilling program. VendorIQ pricing scales with wells under management and tracked vendor categories.</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Wells drilled / year</label>
+          <input type="number" id="wellsPerYear" value="20" min="1" max="500" oninput="calc()">
+          <div class="hint">Active drilling program size</div>
+        </div>
+        <div class="field">
+          <label>Avg. well cost (AFE)</label>
+          <input type="number" id="wellCost" value="2500000" min="100000" oninput="calc()">
+          <div class="hint">Total AFE per well in <span class="cur-sym">CAD</span></div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Service categories tracked</label>
+          <select id="categories" onchange="calc()">
+            <option value="3">1–3 categories</option>
+            <option value="6" selected>4–6 categories</option>
+            <option value="9">7–9 categories</option>
+            <option value="12">10–12 categories</option>
+          </select>
+          <div class="hint">Drilling, directional, fluids, cementing, etc.</div>
+        </div>
+        <div class="field">
+          <label>Vendors tracked (est.)</label>
+          <input type="number" id="vendors" value="30" min="5" max="200" oninput="calc()">
+          <div class="hint">Across all service categories</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Current DSO — service cos.</label>
+          <input type="number" id="currentDSO" value="58" min="20" max="120" oninput="calc()">
+          <div class="hint">Days to pay vendors (basin avg ~58)</div>
+        </div>
+        <div class="field">
+          <label>Field tickets / month</label>
+          <input type="number" id="ticketsPerMonth" value="400" min="10" max="5000" oninput="calc()">
+          <div class="hint">Total across all active wells</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. PRICING TIER -->
+    <div class="card">
+      <div class="card-title">2 — Platform Tier</div>
+      <div class="card-sub">Select the tier that best matches your program scale. Annual contract pricing.</div>
+
+      <div class="tier-grid" id="tierGrid">
+        <div class="tier-btn active" onclick="selectTier(0)">
+          <div class="t-name">Starter</div>
+          <div class="t-wells">5–15 wells/yr</div>
+          <div class="t-price" id="t0-price"></div>
+          <div style="font-size:9px;color:#888;margin-top:3px">per month</div>
+        </div>
+        <div class="tier-btn" onclick="selectTier(1)">
+          <div class="t-name">Professional</div>
+          <div class="t-wells">15–50 wells/yr</div>
+          <div class="t-price" id="t1-price"></div>
+          <div style="font-size:9px;color:#888;margin-top:3px">per month</div>
+        </div>
+        <div class="tier-btn" onclick="selectTier(2)">
+          <div class="t-name">Enterprise</div>
+          <div class="t-wells">50+ wells/yr</div>
+          <div class="t-price" id="t2-price"></div>
+          <div style="font-size:9px;color:#888;margin-top:3px">per month</div>
+        </div>
+      </div>
+
+      <!-- Add-ons -->
+      <div class="sec-lbl" style="margin-top:6px">Add-on Modules</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-lbl">AFE Intelligence Module</div>
+          <div class="toggle-sub">AFE variance tracking, overrun alerts, line-item benchmarks</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="add-price" id="afe-addon-price"></span>
+          <label class="toggle"><input type="checkbox" id="addAFE" onchange="calc()" checked><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-lbl">Pre-Well Vendor Selection Tool</div>
+          <div class="toggle-sub">AI-ranked vendor recommendations per service category</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="add-price" id="selection-addon-price"></span>
+          <label class="toggle"><input type="checkbox" id="addSelection" onchange="calc()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-lbl">Multi-Basin Benchmarking</div>
+          <div class="toggle-sub">Cross-basin cost comps (Montney, Clearwater, Duvernay, Bakken)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="add-price" id="basin-addon-price"></span>
+          <label class="toggle"><input type="checkbox" id="addBasin" onchange="calc()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. VALUE DRIVERS -->
+    <div class="card">
+      <div class="card-title">3 — Value Driver Inputs</div>
+      <div class="card-sub">These assumptions drive the ROI model. Adjust to match your actual program performance.</div>
+
+      <div class="sec-lbl">AFE & Cost Control</div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Current AFE overrun rate</label>
+          <input type="number" id="afeOverrun" value="8" min="0" max="30" step="0.5" oninput="calc()">
+          <div class="hint">% over budget (industry avg ~8–12%)</div>
+        </div>
+        <div class="field">
+          <label>Expected overrun reduction</label>
+          <input type="number" id="overrunReduction" value="35" min="0" max="80" oninput="calc()">
+          <div class="hint">% improvement with VendorIQ data</div>
+        </div>
+        <div class="field">
+          <label>Current dispute rate</label>
+          <input type="number" id="disputeRate" value="11" min="0" max="30" step="0.5" oninput="calc()">
+          <div class="hint">% of tickets disputed (avg ~11%)</div>
+        </div>
+      </div>
+
+      <div class="sec-lbl">Vendor Rate Management</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Annual services spend</label>
+          <input type="number" id="servicesSpend" value="18000000" min="500000" oninput="calc()">
+          <div class="hint">Total vendor services in <span class="cur-sym">CAD</span>/yr</div>
+        </div>
+        <div class="field">
+          <label>Estimated rate savings</label>
+          <input type="number" id="rateSavings" value="3" min="0" max="15" step="0.5" oninput="calc()">
+          <div class="hint">% saved via benchmark negotiation</div>
+        </div>
+      </div>
+
+      <div class="sec-lbl">AP / Supply Chain Labour</div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>AP/supply chain staff</label>
+          <input type="number" id="apStaff" value="2" min="1" max="20" oninput="calc()">
+          <div class="hint">FTEs managing vendor data</div>
+        </div>
+        <div class="field">
+          <label>Hours/week on vendor admin</label>
+          <input type="number" id="adminHours" value="20" min="1" max="60" oninput="calc()">
+          <div class="hint">Per person (manual benchmarking etc.)</div>
+        </div>
+        <div class="field">
+          <label>Fully loaded rate (<span class="cur-sym">CAD</span>/hr)</label>
+          <input type="number" id="labourRate" value="75" min="20" max="200" oninput="calc()">
+        </div>
+      </div>
+
+      <!-- SR&ED — CAD only -->
+      <div id="sred-section">
+        <div class="sred-banner">
+          <div class="sred-icon">🇨🇦</div>
+          <div>
+            <div class="sred-title">SR&amp;ED Tax Credit Recovery — Canadian Programs</div>
+            <div class="sred-body">Operators implementing VendorIQ's data integration &amp; benchmarking engine may qualify for SR&amp;ED credits on development and integration work. Estimated below using CRA proxy method.</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Integration / IT staff cost (<span class="cur-sym">CAD</span>/yr)</label>
+            <input type="number" id="sred-it" value="120000" min="0" oninput="calc()">
+            <div class="hint">Salary of staff doing integration work</div>
+          </div>
+          <div class="field">
+            <label>% time on SR&amp;ED-eligible work</label>
+            <input type="number" id="sred-pct" value="30" min="0" max="100" oninput="calc()">
+            <div class="hint">Portion of role qualifying for SR&amp;ED</div>
+          </div>
+        </div>
+        <div class="toggle-row" style="margin-bottom:6px">
+          <div>
+            <div class="toggle-lbl">CCPC (Canadian-Controlled Private Corp)</div>
+            <div class="toggle-sub">35% refundable ITC vs. 15% for other corps</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="isCCPC" onchange="calc()" checked><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left-col -->
+
+  <!-- ═══ RIGHT COLUMN — RESULTS ═══ -->
+  <div class="right-col">
+
+    <!-- ROI HERO -->
+    <div class="roi-hero">
+      <div class="roi-hero-label">Estimated First-Year ROI</div>
+      <div class="roi-hero-val" id="roi-pct">—</div>
+      <div class="roi-hero-sub">Total quantified benefit vs. annual platform cost</div>
+      <div class="roi-bar-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#778;margin-bottom:4px">
+          <span>Platform cost</span><span>Benefits</span>
+        </div>
+        <div class="roi-bar-track"><div class="roi-bar-fill" id="roi-bar" style="width:0%"></div></div>
+      </div>
+      <div class="roi-breakdown">
+        <div class="roi-item">
+          <div class="roi-item-lbl">Annual cost</div>
+          <div class="roi-item-val" id="annual-cost">—</div>
+        </div>
+        <div class="roi-item">
+          <div class="roi-item-lbl">Total benefit</div>
+          <div class="roi-item-val green" id="total-benefit">—</div>
+        </div>
+        <div class="roi-item">
+          <div class="roi-item-lbl">Payback period</div>
+          <div class="roi-item-val gold" id="payback">—</div>
+        </div>
+        <div class="roi-item">
+          <div class="roi-item-lbl">Net annual value</div>
+          <div class="roi-item-val green" id="net-value">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BENEFIT BREAKDOWN -->
+    <div class="card">
+      <div class="sec-lbl">Benefit Breakdown</div>
+      <div class="kpi-grid">
+        <div class="kpi" style="border-color:var(--green)">
+          <div class="kpi-lbl">AFE Overrun Savings</div>
+          <div class="kpi-val" style="color:var(--green);font-size:16px" id="kpi-afe">—</div>
+          <div class="kpi-sub">per year</div>
+        </div>
+        <div class="kpi" style="border-color:var(--blue)">
+          <div class="kpi-lbl">Rate Negotiation Savings</div>
+          <div class="kpi-val" style="color:var(--blue);font-size:16px" id="kpi-rates">—</div>
+          <div class="kpi-sub">per year</div>
+        </div>
+        <div class="kpi" style="border-color:var(--amber)">
+          <div class="kpi-lbl">Labour Cost Reduction</div>
+          <div class="kpi-val" style="color:var(--amber);font-size:16px" id="kpi-labour">—</div>
+          <div class="kpi-sub">per year</div>
+        </div>
+        <div class="kpi" style="border-color:var(--purple)">
+          <div class="kpi-lbl">Dispute Resolution Savings</div>
+          <div class="kpi-val" style="color:var(--purple);font-size:16px" id="kpi-disputes">—</div>
+          <div class="kpi-sub">per year</div>
+        </div>
+      </div>
+
+      <!-- SR&ED -->
+      <div id="sred-kpi-row" style="margin-bottom:12px">
+        <div class="kpi" style="border-color:var(--gold);background:var(--ltgold)">
+          <div class="kpi-lbl" style="color:var(--dkgold)">🇨🇦 SR&amp;ED Tax Credit Recovery</div>
+          <div class="kpi-val" style="color:var(--dkgold);font-size:16px" id="kpi-sred">—</div>
+          <div class="kpi-sub">estimated CRA refund / ITC (proxy method)</div>
+        </div>
+      </div>
+
+      <div class="sec-lbl">Platform Cost Summary</div>
+      <table class="sum-table" id="costTable">
+        <tbody>
+          <tr><td>Base platform (tier)</td><td id="sum-base">—</td></tr>
+          <tr class="sub-row" id="row-afe"><td>&nbsp;&nbsp;+ AFE Intelligence Module</td><td id="sum-afe-add">—</td></tr>
+          <tr class="sub-row" id="row-sel"><td>&nbsp;&nbsp;+ Vendor Selection Tool</td><td id="sum-sel-add">—</td></tr>
+          <tr class="sub-row" id="row-bas"><td>&nbsp;&nbsp;+ Multi-Basin Benchmarking</td><td id="sum-bas-add">—</td></tr>
+          <tr><td style="font-weight:700">Monthly total</td><td id="sum-monthly" style="font-weight:700">—</td></tr>
+          <tr class="total-row"><td>Annual contract</td><td id="sum-annual">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DSO INSIGHT -->
+    <div class="card">
+      <div class="sec-lbl">DSO & Vendor Relationship Impact</div>
+      <div class="field-row">
+        <div style="text-align:center;padding:10px;background:var(--ltred);border-radius:8px">
+          <div style="font-size:9px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">Current DSO</div>
+          <div style="font-size:24px;font-weight:900;color:var(--red)" id="dso-before">—</div>
+          <div style="font-size:9px;color:var(--red)">days avg</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--ltgrn);border-radius:8px">
+          <div style="font-size:9px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">Target DSO</div>
+          <div style="font-size:24px;font-weight:900;color:var(--green)" id="dso-after">—</div>
+          <div style="font-size:9px;color:var(--green)">days avg</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:10px 12px;background:var(--lgray);border-radius:6px;font-size:11px;color:var(--navy);line-height:1.6" id="dso-insight">—</div>
+    </div>
+
+    <!-- PRINT -->
+    <button class="print-btn" onclick="generateReport()">⬇ Generate Printable Report</button>
+    <div class="disclaimer">For illustrative purposes only. Actual savings will vary based on program specifics, vendor mix, and data quality. Not financial or tax advice. SR&amp;ED estimates use CRA proxy method — consult a qualified SR&amp;ED consultant for a formal claim assessment.</div>
+
+  </div><!-- end right-col -->
+
+</div><!-- end main -->
+
+<script>
+let currency = 'CAD';
+let selectedTier = 0;
+
+// PRICING (CAD)
+const TIERS_CAD = [
+  { name:'Starter', wells:'5–15', price:2000 },
+  { name:'Professional', wells:'15–50', price:4500 },
+  { name:'Enterprise', wells:'50+', price:10000 },
+];
+const ADDONS_CAD = { afe:500, selection:400, basin:600 };
+const FX = 0.74; // CAD -> USD
+
+function tiers(){ return TIERS_CAD.map(t=>({...t, price: currency==='CAD' ? t.price : Math.round(t.price*FX/10)*10})); }
+function addons(){ const m = currency==='CAD' ? 1 : FX; return { afe: Math.round(ADDONS_CAD.afe*m/10)*10, selection: Math.round(ADDONS_CAD.selection*m/10)*10, basin: Math.round(ADDONS_CAD.basin*m/10)*10 }; }
+
+function fmt(n){ 
+  const sym = currency==='CAD' ? 'CA$' : 'US$';
+  if(Math.abs(n)>=1000000) return sym+(n/1000000).toFixed(1)+'M';
+  if(Math.abs(n)>=1000) return sym+Math.round(n).toLocaleString();
+  return sym+Math.round(n);
+}
+
+function fmtFull(n){
+  const sym = currency==='CAD' ? 'CA$' : 'US$';
+  return sym+Math.round(n).toLocaleString();
+}
+
+function val(id){ return parseFloat(document.getElementById(id).value)||0; }
+
+function setCurrency(c){
+  currency = c;
+  document.getElementById('btn-cad').classList.toggle('active', c==='CAD');
+  document.getElementById('btn-usd').classList.toggle('active', c==='USD');
+  document.getElementById('currency-label').textContent = c==='CAD' ? 'Canadian Dollar (CAD)' : 'US Dollar (USD)';
+  document.querySelectorAll('.cur-sym').forEach(el=>el.textContent=c);
+  document.getElementById('sred-section').style.display = c==='CAD' ? '' : 'none';
+  document.getElementById('sred-kpi-row').style.display = c==='CAD' ? '' : 'none';
+  renderTierButtons();
+  calc();
+}
+
+function selectTier(idx){
+  selectedTier = idx;
+  document.querySelectorAll('.tier-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  calc();
+}
+
+function renderTierButtons(){
+  const T = tiers();
+  const A = addons();
+  T.forEach((t,i)=>{ document.getElementById('t'+i+'-price').textContent = fmt(t.price); });
+  document.getElementById('afe-addon-price').textContent = '+'+fmt(A.afe)+'/mo';
+  document.getElementById('selection-addon-price').textContent = '+'+fmt(A.selection)+'/mo';
+  document.getElementById('basin-addon-price').textContent = '+'+fmt(A.basin)+'/mo';
+}
+
+function calc(){
+  renderTierButtons();
+
+  const T = tiers();
+  const A = addons();
+  const fx = currency==='CAD' ? 1 : FX;
+
+  // Platform cost
+  let monthly = T[selectedTier].price;
+  const addAFE = document.getElementById('addAFE').checked;
+  const addSel = document.getElementById('addSelection').checked;
+  const addBas = document.getElementById('addBasin').checked;
+  if(addAFE) monthly += A.afe;
+  if(addSel) monthly += A.selection;
+  if(addBas) monthly += A.basin;
+  const annual = monthly * 12;
+
+  // Cost table
+  document.getElementById('sum-base').textContent = fmtFull(T[selectedTier].price)+'/mo';
+  document.getElementById('row-afe').style.display = addAFE ? '' : 'none';
+  document.getElementById('row-sel').style.display = addSel ? '' : 'none';
+  document.getElementById('row-bas').style.display = addBas ? '' : 'none';
+  document.getElementById('sum-afe-add').textContent = fmtFull(A.afe)+'/mo';
+  document.getElementById('sum-sel-add').textContent = fmtFull(A.selection)+'/mo';
+  document.getElementById('sum-bas-add').textContent = fmtFull(A.basin)+'/mo';
+  document.getElementById('sum-monthly').textContent = fmtFull(monthly)+'/mo';
+  document.getElementById('sum-annual').textContent = fmtFull(annual)+'/yr';
+
+  // Value drivers
+  const wellsPerYear = val('wellsPerYear');
+  const wellCost = val('wellCost');
+  const afeOverrunPct = val('afeOverrun')/100;
+  const overrunReducPct = val('overrunReduction')/100;
+  const disputeRate = val('disputeRate')/100;
+  const servicesSpend = val('servicesSpend');
+  const rateSavingsPct = val('rateSavings')/100;
+  const apStaff = val('apStaff');
+  const adminHours = val('adminHours');
+  const labourRate = val('labourRate');
+  const ticketsPerMonth = val('ticketsPerMonth');
+  const currentDSO = val('currentDSO');
+
+  // 1. AFE overrun savings
+  const totalAFESpend = wellsPerYear * wellCost;
+  const currentOverrunCost = totalAFESpend * afeOverrunPct;
+  const afeOverrunSaving = currentOverrunCost * overrunReducPct;
+
+  // 2. Rate negotiation savings
+  const rateSavingAmt = servicesSpend * rateSavingsPct;
+
+  // 3. Labour savings
+  const labourSavingMonthly = apStaff * adminHours * 4.33 * labourRate * 0.4; // 40% time recaptured
+  const labourSavingAnnual = labourSavingMonthly * 12;
+
+  // 4. Dispute resolution cost
+  const disputedTickets = ticketsPerMonth * disputeRate * 12;
+  const avgDisputeCost = currency==='CAD' ? 850 : Math.round(850*FX/10)*10;
+  const disputeTargetRate = 0.04; // VendorIQ target ~4%
+  const disputeReduction = Math.max(0, disputeRate - disputeTargetRate);
+  const disputeSaving = ticketsPerMonth * disputeReduction * 12 * avgDisputeCost;
+
+  // 5. SR&ED
+  let sredSaving = 0;
+  if(currency==='CAD'){
+    const itSalary = val('sred-it');
+    const sRedPct = val('sred-pct')/100;
+    const isCCPC = document.getElementById('isCCPC').checked;
+    const eligSalary = itSalary * sRedPct;
+    const proxyAddition = eligSalary * 0.55;
+    const eligibleExp = eligSalary + proxyAddition;
+    const itcRate = isCCPC ? 0.35 : 0.15;
+    sredSaving = eligibleExp * itcRate;
+  }
+
+  const totalBenefit = afeOverrunSaving + rateSavingAmt + labourSavingAnnual + disputeSaving + sredSaving;
+  const roiPct = annual > 0 ? Math.round((totalBenefit / annual) * 100) : 0;
+  const netValue = totalBenefit - annual;
+  const paybackMonths = totalBenefit > 0 ? (annual / totalBenefit) * 12 : 999;
+
+  // DSO
+  const dsoTarget = Math.max(28, Math.round(currentDSO * 0.6));
+
+  // Update UI
+  document.getElementById('kpi-afe').textContent = fmt(afeOverrunSaving);
+  document.getElementById('kpi-rates').textContent = fmt(rateSavingAmt);
+  document.getElementById('kpi-labour').textContent = fmt(labourSavingAnnual);
+  document.getElementById('kpi-disputes').textContent = fmt(disputeSaving);
+  document.getElementById('kpi-sred').textContent = fmt(sredSaving);
+
+  document.getElementById('roi-pct').textContent = roiPct.toLocaleString()+'%';
+  document.getElementById('annual-cost').textContent = fmt(annual);
+  document.getElementById('total-benefit').textContent = fmt(totalBenefit);
+  document.getElementById('payback').textContent = paybackMonths < 12 ? Math.round(paybackMonths)+' months' : (paybackMonths/12).toFixed(1)+' yrs';
+  document.getElementById('net-value').textContent = fmt(netValue);
+
+  const barPct = Math.min(Math.round((totalBenefit/annual)*50), 98);
+  document.getElementById('roi-bar').style.width = Math.max(barPct,5)+'%';
+
+  document.getElementById('dso-before').textContent = Math.round(currentDSO);
+  document.getElementById('dso-after').textContent = dsoTarget;
+  document.getElementById('dso-insight').innerHTML = `With VendorIQ's vendor performance scoring and faster dispute resolution, average DSO to service companies is projected to compress from <strong>${Math.round(currentDSO)} days</strong> to ~<strong>${dsoTarget} days</strong> — a <strong>${Math.round(currentDSO - dsoTarget)}-day improvement</strong>. Preferred vendors rewarded with faster payment cycles have documented rate concession history of <strong>5–12%</strong> at renewal.`;
+
+  // Store for report
+  window._calcData = {
+    client: document.getElementById('clientName').value || 'Prospect',
+    currency, tierName: T[selectedTier].name, monthly, annual,
+    afeOverrunSaving, rateSavingAmt, labourSavingAnnual, disputeSaving, sredSaving,
+    totalBenefit, roiPct, netValue, paybackMonths,
+    wellsPerYear, wellCost, currentDSO, dsoTarget, servicesSpend,
+    addAFE, addSel, addBas, A, T, selectedTier
+  };
+}
+
+function generateReport(){
+  const d = window._calcData;
+  if(!d){ alert('Please fill in the calculator first.'); return; }
+  const sym = d.currency==='CAD' ? 'CA$' : 'US$';
+  const fmtR = n => {
+    if(Math.abs(n)>=1000000) return sym+(n/1000000).toFixed(2)+'M';
+    if(Math.abs(n)>=1000) return sym+Math.round(n).toLocaleString();
+    return sym+Math.round(n);
+  };
+  const today = new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'});
+  const pb = d.paybackMonths < 12 ? Math.round(d.paybackMonths)+' months' : (d.paybackMonths/12).toFixed(1)+' years';
+
+  const sredRow = d.currency==='CAD' && d.sredSaving>0 ? `
+    <tr style="background:#FFF8E7"><td style="padding:10px 14px;font-weight:600;color:#9A7520">🇨🇦 SR&ED Tax Credit (CRA proxy method)</td><td style="padding:10px 14px;text-align:right;font-weight:800;color:#9A7520">${fmtR(d.sredSaving)}</td></tr>
+  ` : '';
+
+  const addonsRows = [
+    d.addAFE ? `<tr><td style="padding:7px 14px;color:#555">&nbsp;&nbsp;+ AFE Intelligence Module</td><td style="padding:7px 14px;text-align:right">${fmtR(d.A.afe)}/mo</td></tr>` : '',
+    d.addSel ? `<tr><td style="padding:7px 14px;color:#555">&nbsp;&nbsp;+ Pre-Well Vendor Selection</td><td style="padding:7px 14px;text-align:right">${fmtR(d.A.selection)}/mo</td></tr>` : '',
+    d.addBas ? `<tr><td style="padding:7px 14px;color:#555">&nbsp;&nbsp;+ Multi-Basin Benchmarking</td><td style="padding:7px 14px;text-align:right">${fmtR(d.A.basin)}/mo</td></tr>` : '',
+  ].join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>EMI VendorIQ — ROI Report — ${d.client}</title>
+<style>
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1A3A5C;background:#f5f5f5;margin:0;padding:0}
+.page{max-width:820px;margin:0 auto;background:white;box-shadow:0 2px 20px rgba(0,0,0,.1)}
+.header{background:#0F2540;padding:24px 36px;border-bottom:4px solid #C9A84C;display:flex;justify-content:space-between;align-items:flex-start}
+.brand{font-size:24px;font-weight:900;color:#C9A84C;letter-spacing:.5px}
+.brand-sub{font-size:10px;color:#778;margin-top:3px}
+.report-meta{text-align:right;font-size:11px;color:#889}
+.report-title{font-size:16px;font-weight:800;color:white;margin-bottom:4px}
+.body{padding:28px 36px}
+.sec{margin-bottom:26px}
+.sec-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #DDE1E9;padding-bottom:6px;margin-bottom:14px}
+.roi-box{background:#0F2540;border:2px solid #C9A84C;border-radius:10px;padding:22px 28px;color:white;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center}
+.roi-big{font-size:56px;font-weight:900;color:#C9A84C;line-height:1}
+.roi-sub{font-size:12px;color:#aab;margin-top:4px}
+.roi-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:220px}
+.roi-stat{background:rgba(255,255,255,.07);border-radius:6px;padding:10px 14px;border:1px solid rgba(255,255,255,.1)}
+.rs-lbl{font-size:9px;color:#889;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.rs-val{font-size:16px;font-weight:800;color:white}
+.rs-val.gold{color:#C9A84C}
+.rs-val.green{color:#5DE89A}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1A3A5C;color:white;padding:8px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+th:last-child{text-align:right}
+td{padding:8px 14px;border-bottom:1px solid #EEE}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even){background:#F8F9FB}
+.total-row td{font-weight:800;font-size:13px;color:#1A3A5C;border-top:2px solid #1A3A5C;padding-top:10px}
+.footer{background:#F4F5F7;padding:12px 36px;font-size:9px;color:#999;line-height:1.6;border-top:1px solid #DDE1E9}
+.print-btn-wrap{padding:14px 36px;background:#f0f0f0;text-align:right}
+.print-btn{background:#C9A84C;color:#0F2540;border:none;padding:10px 24px;font-size:12px;font-weight:800;border-radius:6px;cursor:pointer}
+</style></head><body>
+<div class="page">
+  <div class="header">
+    <div><div class="brand">EMI VendorIQ™</div><div class="brand-sub">Supplier Intelligence &amp; Benchmarking Platform</div></div>
+    <div class="report-meta">
+      <div class="report-title">ROI Analysis Report</div>
+      <div>Prepared for: <strong style="color:white">${d.client}</strong></div>
+      <div>Date: ${today} &nbsp;·&nbsp; Currency: ${d.currency}</div>
+    </div>
+  </div>
+  <div class="body">
+
+    <div class="roi-box">
+      <div><div style="font-size:11px;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Estimated First-Year ROI</div>
+        <div class="roi-big">${d.roiPct.toLocaleString()}%</div>
+        <div class="roi-sub">Total quantified benefit vs. annual platform cost</div></div>
+      <div class="roi-stats">
+        <div class="roi-stat"><div class="rs-lbl">Annual cost</div><div class="rs-val">${fmtR(d.annual)}</div></div>
+        <div class="roi-stat"><div class="rs-lbl">Total benefit</div><div class="rs-val green">${fmtR(d.totalBenefit)}</div></div>
+        <div class="roi-stat"><div class="rs-lbl">Payback</div><div class="rs-val gold">${pb}</div></div>
+        <div class="roi-stat"><div class="rs-lbl">Net annual value</div><div class="rs-val green">${fmtR(d.netValue)}</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Benefit Breakdown</div>
+      <table>
+        <thead><tr><th>Value Driver</th><th>Basis</th><th style="text-align:right">Annual Value</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600">AFE Overrun Reduction</td><td style="color:#555">Improved budget accuracy on ${d.wellsPerYear} wells/yr</td><td style="text-align:right;font-weight:700;color:#1A7A3C">${fmtR(d.afeOverrunSaving)}</td></tr>
+          <tr><td style="font-weight:600">Vendor Rate Negotiation</td><td style="color:#555">Benchmark data leverage on ${fmtR(d.servicesSpend)} services spend</td><td style="text-align:right;font-weight:700;color:#1A7A3C">${fmtR(d.rateSavingAmt)}</td></tr>
+          <tr><td style="font-weight:600">AP / Supply Chain Labour</td><td style="color:#555">40% time recaptured from manual benchmarking</td><td style="text-align:right;font-weight:700;color:#1A7A3C">${fmtR(d.labourSavingAnnual)}</td></tr>
+          <tr><td style="font-weight:600">Dispute Resolution Savings</td><td style="color:#555">Lower dispute rate → fewer resolution hours</td><td style="text-align:right;font-weight:700;color:#1A7A3C">${fmtR(d.disputeSaving)}</td></tr>
+          ${sredRow}
+          <tr class="total-row"><td colspan="2">Total Quantified Benefit</td><td style="text-align:right;color:#1A7A3C">${fmtR(d.totalBenefit)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Platform Pricing — ${d.T[d.selectedTier].name} Tier</div>
+      <table>
+        <thead><tr><th>Line Item</th><th style="text-align:right">Monthly</th><th style="text-align:right">Annual</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600">Base Platform (${d.T[d.selectedTier].name})</td><td style="text-align:right">${fmtR(d.T[d.selectedTier].price)}</td><td style="text-align:right">${fmtR(d.T[d.selectedTier].price*12)}</td></tr>
+          ${d.addAFE ? `<tr><td style="color:#555">&nbsp;&nbsp;+ AFE Intelligence Module</td><td style="text-align:right">${fmtR(d.A.afe)}</td><td style="text-align:right">${fmtR(d.A.afe*12)}</td></tr>` : ''}
+          ${d.addSel ? `<tr><td style="color:#555">&nbsp;&nbsp;+ Pre-Well Vendor Selection</td><td style="text-align:right">${fmtR(d.A.selection)}</td><td style="text-align:right">${fmtR(d.A.selection*12)}</td></tr>` : ''}
+          ${d.addBas ? `<tr><td style="color:#555">&nbsp;&nbsp;+ Multi-Basin Benchmarking</td><td style="text-align:right">${fmtR(d.A.basin)}</td><td style="text-align:right">${fmtR(d.A.basin*12)}</td></tr>` : ''}
+          <tr class="total-row"><td colspan="2">Annual Contract Total</td><td style="text-align:right;color:#1A3A5C">${fmtR(d.annual)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">DSO & Vendor Relationship Impact</div>
+      <table>
+        <thead><tr><th>Metric</th><th style="text-align:right">Before VendorIQ</th><th style="text-align:right">With VendorIQ</th><th style="text-align:right">Improvement</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600">Avg DSO to service companies</td><td style="text-align:right;color:#C0392B;font-weight:700">${Math.round(d.currentDSO)} days</td><td style="text-align:right;color:#1A7A3C;font-weight:700">~${d.dsoTarget} days</td><td style="text-align:right;font-weight:700">${Math.round(d.currentDSO - d.dsoTarget)} days faster</td></tr>
+          <tr><td style="font-weight:600">Dispute rate (field tickets)</td><td style="text-align:right;color:#C0392B;font-weight:700">~11%</td><td style="text-align:right;color:#1A7A3C;font-weight:700">~4%</td><td style="text-align:right;font-weight:700">66% reduction</td></tr>
+          <tr><td style="font-weight:600">Preferred vendors (scorecards)</td><td style="text-align:right;color:#888">No structured data</td><td style="text-align:right;color:#1A7A3C;font-weight:700">Real-time scored</td><td style="text-align:right;font-weight:700">Full visibility</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+  <div class="print-btn-wrap"><button class="print-btn" onclick="window.print()">Print / Save as PDF</button></div>
+  <div class="footer">For illustrative purposes only. Actual savings will vary based on program specifics, vendor mix, and platform data quality. Not financial or tax advice. SR&ED estimates use CRA proxy method — consult a qualified SR&ED consultant for a formal claim assessment. &copy; Enter My Invoice (EMI) — VendorIQ™</div>
+</div>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+// INIT
+renderTierButtons();
+calc();
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1a1a2e; padding: 28px; max-width: 900px; }
+h2 { font-size: 20px; font-weight: 800; color: #1a1a2e; margin-bottom: 4px; }
+.subtitle { font-size: 12px; color: #777; margin-bottom: 28px; }
+.section-title { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
+.bar-row { margin-bottom: 18px; }
+.bar-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 5px; }
+.year { font-weight: 800; font-size: 13px; }
+.right-meta { display: flex; gap: 14px; align-items: center; }
+.total-lbl { font-weight: 700; color: #1a1a2e; }
+.yoy-pos { color: #16a34a; font-weight: 700; font-size: 11px; }
+.yoy-neg { color: #dc2626; font-weight: 700; font-size: 11px; }
+.yoy-base { color: #999; font-size: 11px; }
+.bar-outer { background: #efefef; border-radius: 4px; height: 30px; overflow: hidden; }
+.bar-inner { display: flex; height: 100%; }
+.seg { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.92); overflow: hidden; white-space: nowrap; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 28px; }
+.leg-item { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.leg-dot { width: 13px; height: 13px; border-radius: 3px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+thead th { background: #1a1a2e; color: #fff; padding: 9px 11px; text-align: right; font-weight: 600; }
+thead th:first-child { text-align: left; border-radius: 4px 0 0 0; }
+thead th:last-child { border-radius: 0 4px 0 0; }
+tbody tr:nth-child(even) { background: #f6f6f9; }
+tbody tr.total-row { background: #fffbea; font-weight: 700; }
+tbody td { padding: 8px 11px; text-align: right; border-bottom: 1px solid #e8e8ee; }
+tbody td:first-child { text-align: left; }
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+.stat-card { border-left: 4px solid; border-radius: 6px; padding: 14px 16px; background: #f8f9fb; }
+.stat-val { font-size: 24px; font-weight: 800; margin-bottom: 3px; }
+.stat-lbl { font-size: 11px; color: #666; line-height: 1.4; }
+.note { font-size: 10px; color: #999; line-height: 1.6; border-top: 1px solid #eee; padding-top: 14px; }
+</style>
+</head>
+<body>
+<h2>Western Canada Oil &amp; Gas Wells Drilled — 2020 to 2024</h2>
+<p class="subtitle">Annual new well counts by province &nbsp;|&nbsp; Sources: CAOEC, AER, BCER, CAPP/Statista</p>
+
+<p class="section-title">Total Wells Drilled — All Western Canada Provinces</p>
+<div id="barchart"></div>
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:#d97706;"></div>Alberta</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#16a34a;"></div>Saskatchewan</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2563eb;"></div>British Columbia</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#7c3aed;"></div>Manitoba</div>
+</div>
+
+<p class="section-title">Wells Drilled by Province (Estimated)</p>
+<table>
+  <thead>
+    <tr>
+      <th>Province</th>
+      <th>2020</th>
+      <th>2021</th>
+      <th>2022</th>
+      <th>2023</th>
+      <th>2024</th>
+      <th>5-Yr Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🟠 Alberta</td>
+      <td>1,850</td><td>2,947</td><td>3,480</td><td>3,240</td><td>3,385</td><td><strong>14,902</strong></td>
+    </tr>
+    <tr>
+      <td>🟢 Saskatchewan</td>
+      <td>820</td><td>1,350</td><td>1,650</td><td>1,620</td><td>1,700</td><td><strong>7,140</strong></td>
+    </tr>
+    <tr>
+      <td>🔵 British Columbia</td>
+      <td>280</td><td>467</td><td>374</td><td>430</td><td>480</td><td><strong>2,031</strong></td>
+    </tr>
+    <tr>
+      <td>🟣 Manitoba</td>
+      <td>60</td><td>80</td><td>78</td><td>70</td><td>73</td><td><strong>361</strong></td>
+    </tr>
+    <tr class="total-row">
+      <td><strong>TOTAL</strong></td>
+      <td><strong>3,010</strong></td><td><strong>4,844</strong></td><td><strong>5,582</strong></td><td><strong>5,360</strong></td><td><strong>5,638</strong></td><td><strong>24,434</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="stat-grid">
+  <div class="stat-card" style="border-color:#dc2626;">
+    <div class="stat-val" style="color:#dc2626;">3,010</div>
+    <div class="stat-lbl">2020 COVID Low<br>~40-year industry low</div>
+  </div>
+  <div class="stat-card" style="border-color:#16a34a;">
+    <div class="stat-val" style="color:#16a34a;">+87%</div>
+    <div class="stat-lbl">Recovery 2020 → 2022<br>Fastest 2-yr rebound in decades</div>
+  </div>
+  <div class="stat-card" style="border-color:#2563eb;">
+    <div class="stat-val" style="color:#2563eb;">5,758</div>
+    <div class="stat-lbl">2024 Actual (CAOEC)<br>Alberta dominates at ~60%</div>
+  </div>
+</div>
+
+<p class="note">
+  <strong>Notes:</strong> CAOEC total 2024 confirmed at 5,758 wells (CAOEC Dec 2025 State of Industry); 2023 actual 5,389. Provincial splits are compiled from CAOEC totals, AER crude oil well data (AB 2024: 3,385 new crude oil wells on production), BCER annual reports (BC 2021: 467 wells; BC 2022: 374 wells), and CAPP/Statista provincial breakdowns (AB 2021: 2,947; SK 2021: ~1,350+). 2022–2024 SK, MB figures are derived estimates using historical provincial share ratios. Total bar counts reflect all well types (oil, gas, CBM, bitumen, exploratory &amp; development). 2020 represented a 40-year low for Western Canada drilling per CAPP/Statista. 2025 CAOEC forecast: 5,548 wells (revised down from earlier 6,604 projection).
+</p>
+
+<script>
+var data = [
+  { year: 2020, ab: 1850, sk: 820, bc: 280, mb: 60, total: 3010, yoy: null },
+  { year: 2021, ab: 2947, sk: 1350, bc: 467, mb: 80, total: 4844, yoy: 60.9 },
+  { year: 2022, ab: 3480, sk: 1650, bc: 374, mb: 78, total: 5582, yoy: 15.2 },
+  { year: 2023, ab: 3240, sk: 1620, bc: 430, mb: 70, total: 5360, yoy: -4.0 },
+  { year: 2024, ab: 3385, sk: 1700, bc: 480, mb: 73, total: 5638, yoy: 5.2 }
+];
+var max = 6000;
+var el = document.getElementById('barchart');
+data.forEach(function(d) {
+  var w = (d.total / max * 100).toFixed(1);
+  var pAB = (d.ab / d.total * 100).toFixed(1);
+  var pSK = (d.sk / d.total * 100).toFixed(1);
+  var pBC = (d.bc / d.total * 100).toFixed(1);
+  var pMB = (d.mb / d.total * 100).toFixed(1);
+  var yoyHtml = d.yoy === null
+    ? '<span class="yoy-base">Baseline year</span>'
+    : '<span class="' + (d.yoy >= 0 ? 'yoy-pos' : 'yoy-neg') + '">' + (d.yoy >= 0 ? '+' : '') + d.yoy + '% YoY</span>';
+  el.innerHTML += '<div class="bar-row">' +
+    '<div class="bar-meta"><span class="year">' + d.year + '</span>' +
+    '<span class="right-meta">' + yoyHtml + '<span class="total-lbl">' + d.total.toLocaleString() + ' wells</span></span></div>' +
+    '<div class="bar-outer"><div class="bar-inner" style="width:' + w + '%;">' +
+    '<div class="seg" style="width:' + pAB + '%;background:#d97706;">' + (d.ab > 500 ? d.ab.toLocaleString() : '') + '</div>' +
+    '<div class="seg" style="width:' + pSK + '%;background:#16a34a;">' + (d.sk > 400 ? d.sk.toLocaleString() : '') + '</div>' +
+    '<div class="seg" style="width:' + pBC + '%;background:#2563eb;">' + (d.bc > 200 ? d.bc : '') + '</div>' +
+    '<div class="seg" style="width:' + pMB + '%;background:#7c3aed;"></div>' +
+    '</div></div></div>';
+});
+</script>
+</body>
+</html>

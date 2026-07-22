@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMI VendorIQ — Supplier Intelligence Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3A5C;--blue:#2E75B6;--ltblue:#D5E8F0;--dkblue:#0F2540;
+  --gold:#C9A84C;--ltgold:#FFF8E7;--dkgold:#9A7520;
+  --green:#1A7A3C;--ltgrn:#E6F4EC;
+  --red:#C0392B;--ltred:#FDECEA;
+  --amber:#D4811A;--ltamb:#FEF3E2;
+  --purple:#6B3FA0;--ltpur:#F0EAF8;
+  --teal:#1A7A7A;--ltteal:#E6F4F4;
+  --lgray:#F4F5F7;--mgray:#DDE1E9;--dgray:#4A4A4A;--white:#FFFFFF;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#ECEEF2;color:var(--navy);min-height:100vh}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--dkblue);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:3px solid var(--gold)}
+.tb-brand{font-size:20px;font-weight:900;color:var(--gold);letter-spacing:.5px}
+.tb-sub{font-size:10px;color:#778;margin-top:1px}
+.tb-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tb-badge{background:rgba(201,168,76,.15);border:1px solid var(--gold);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--gold)}
+.tb-org{font-size:11px;color:#aab}
+.live-dot{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#4AE080}
+.pulse{width:7px;height:7px;border-radius:50%;background:#4AE080;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+/* ── NAV TABS ── */
+.nav-tabs{background:var(--navy);padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.nav-tab{padding:11px 20px;font-size:12px;font-weight:600;color:#889;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s}
+.nav-tab:hover{color:#ccd}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── LAYOUT ── */
+.page{display:none;padding:20px 24px;max-width:1500px;margin:0 auto}
+.page.active{display:block}
+
+/* ── SECTION LABEL ── */
+.sec-lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--mgray)}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;gap:12px;margin-bottom:16px}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.stat-card{background:var(--white);border-radius:8px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-top:3px solid}
+.sc-lbl{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.sc-val{font-size:22px;font-weight:800;margin-bottom:2px;line-height:1}
+.sc-sub{font-size:10px;color:#888}
+.sc-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:5px}
+
+/* ── CARDS & PANELS ── */
+.card{background:var(--white);border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:14px}
+.card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.card-sub{font-size:10px;color:#888;margin-bottom:14px}
+
+/* ── GRID LAYOUTS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:14px}
+
+/* ── TABLES ── */
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead th{background:var(--navy);color:var(--white);padding:8px 12px;text-align:right;font-weight:600;font-size:10px}
+thead th:first-child{text-align:left;border-radius:4px 0 0 0}
+thead th:last-child{border-radius:0 4px 0 0}
+tbody tr{border-bottom:1px solid var(--mgray);transition:background .15s}
+tbody tr:nth-child(even){background:var(--lgray)}
+tbody tr:hover{background:var(--ltblue)}
+tbody td{padding:8px 12px;text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+
+/* ── SCORE BAR ── */
+.score-bar-wrap{display:flex;align-items:center;gap:8px}
+.score-bar-bg{flex:1;height:8px;background:var(--mgray);border-radius:4px;overflow:hidden;min-width:60px}
+.score-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.score-num{font-size:10px;font-weight:800;min-width:28px;text-align:right}
+
+/* ── PILLS ── */
+.pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
+.pill-green{background:var(--ltgrn);color:var(--green)}
+.pill-red{background:var(--ltred);color:var(--red)}
+.pill-amber{background:var(--ltamb);color:var(--amber)}
+.pill-blue{background:var(--ltblue);color:var(--blue)}
+.pill-purple{background:var(--ltpur);color:var(--purple)}
+.pill-gold{background:var(--ltgold);color:var(--dkgold)}
+.pill-navy{background:var(--ltblue);color:var(--navy)}
+
+/* ── STAR RATING ── */
+.stars{color:var(--gold);font-size:12px;letter-spacing:1px}
+
+/* ── VENDOR CARD ── */
+.vendor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.vendor-card{background:var(--white);border-radius:8px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:4px solid;cursor:pointer;transition:box-shadow .2s}
+.vendor-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.vc-name{font-size:12px;font-weight:800;color:var(--navy);margin-bottom:2px}
+.vc-cat{font-size:10px;color:#888;margin-bottom:8px}
+.vc-score{font-size:28px;font-weight:900;line-height:1;margin-bottom:4px}
+.vc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px}
+.vc-metric{background:var(--lgray);border-radius:4px;padding:5px 7px}
+.vc-metric-lbl{font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.3px}
+.vc-metric-val{font-size:11px;font-weight:700;color:var(--navy)}
+.vc-preferred{background:var(--gold);color:var(--navy);font-size:8px;font-weight:800;padding:2px 7px;border-radius:3px;display:inline-block;margin-bottom:6px}
+
+/* ── TREND SPARKLINE placeholder ── */
+.trend-up{color:var(--green);font-size:12px;font-weight:700}
+.trend-dn{color:var(--red);font-size:12px;font-weight:700}
+.trend-fl{color:var(--amber);font-size:12px;font-weight:700}
+
+/* ── BENCHMARK BAR ── */
+.bench-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:11px}
+.bench-label{min-width:160px;font-weight:600;color:var(--navy)}
+.bench-track{flex:1;height:18px;background:var(--mgray);border-radius:9px;position:relative;overflow:hidden}
+.bench-fill{height:100%;border-radius:9px;display:flex;align-items:center;padding-left:8px;font-size:9px;font-weight:700;color:#fff;white-space:nowrap}
+.bench-marker{position:absolute;top:0;height:100%;width:2px;background:var(--gold)}
+.bench-vals{display:flex;gap:8px;min-width:120px;justify-content:flex-end}
+.bench-your{font-weight:800;color:var(--blue)}
+.bench-avg{color:#888;font-size:10px}
+
+/* ── ALERT ITEM ── */
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:6px;margin-bottom:8px;font-size:11px}
+.ai-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.ai-title{font-weight:700;font-size:11px;margin-bottom:2px}
+.ai-body{font-size:10px;line-height:1.4}
+
+/* ── RADAR ── */
+.radar-wrap{display:flex;gap:20px;align-items:center}
+.radar-legend{display:flex;flex-direction:column;gap:8px;min-width:140px}
+.rl-item{display:flex;align-items:center;gap:6px;font-size:10px}
+.rl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── MINI KPI ── */
+.mini-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.mini-kpi{background:var(--lgray);border-radius:6px;padding:9px 11px;text-align:center}
+.mk-val{font-size:17px;font-weight:800;color:var(--navy)}
+.mk-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.mk-vs{font-size:9px;margin-top:2px}
+
+/* ── SELECT FILTER ── */
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filter-lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px}
+select,input{padding:6px 10px;border:1px solid var(--mgray);border-radius:5px;font-size:11px;color:var(--navy);background:var(--white);cursor:pointer}
+select:focus,input:focus{outline:none;border-color:var(--blue)}
+.btn{padding:6px 14px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;border:none}
+.btn-primary{background:var(--navy);color:var(--white)}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-outline{background:transparent;border:1px solid var(--mgray);color:var(--dgray)}
+
+/* ── AFE COMPARE ── */
+.afe-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--mgray);font-size:11px}
+.afe-cat{flex:0 0 180px;font-weight:600;color:var(--navy)}
+.afe-bars{flex:1;display:flex;flex-direction:column;gap:3px}
+.afe-bar-row{display:flex;align-items:center;gap:6px}
+.afe-bar-lbl{font-size:9px;color:#888;min-width:40px}
+.afe-bar-track{flex:1;height:10px;background:var(--mgray);border-radius:5px;overflow:hidden}
+.afe-bar-fill{height:100%;border-radius:5px}
+.afe-val{font-size:10px;font-weight:700;min-width:52px;text-align:right}
+
+/* ── TOOLTIP ── */
+[title]{cursor:help}
+
+/* ── PREFERRED BADGE ── */
+.preferred-banner{background:linear-gradient(135deg,var(--gold),#E8C560);color:var(--navy);border-radius:6px;padding:10px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pb-star{font-size:24px}
+.pb-title{font-size:13px;font-weight:800}
+.pb-sub{font-size:10px;margin-top:1px;opacity:.8}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#eee}
+::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <div class="tb-brand">EMI VendorIQ™</div>
+    <div class="tb-sub">Supplier Intelligence & Benchmarking Platform</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-org">Magus Engineering Ltd. &nbsp;|&nbsp; Whitecap Resources Inc.</div>
+    <div class="tb-badge">Basin: AB / SK &nbsp;·&nbsp; 2024–2025</div>
+    <div class="live-dot"><div class="pulse"></div>LIVE DATA</div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showPage('overview')">📊 Overview</div>
+  <div class="nav-tab" onclick="showPage('vendors')">🏢 Vendor Scorecards</div>
+  <div class="nav-tab" onclick="showPage('benchmarks')">📐 Benchmarks</div>
+  <div class="nav-tab" onclick="showPage('selection')">🎯 Vendor Selection</div>
+  <div class="nav-tab" onclick="showPage('afe')">💰 AFE Intelligence</div>
+  <div class="nav-tab" onclick="showPage('alerts')">🔔 Alerts</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE: OVERVIEW -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="page-overview" class="page active">
+
+  <div class="sec-lbl">Platform Summary — 12 Month Rolling</div>
+  <div class="stat-grid g5">
+    <div class="stat-card" style="border-color:var(--blue)">
+      <div class="sc-lbl">Wells Tracked</div>
+      <div class="sc-val" style="color:var(--navy)">47</div>
+      <div class="sc-sub">AB / SK basin</div>
+      <div class="sc-badge" style="background:var(--ltblue);color:var(--blue)">+12 YoY</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--green)">
+      <div class="sc-lbl">Vendors Tracked</div>
+      <div class="sc-val" style="color:var(--green)">84</div>
+      <div class="sc-sub">Across 12 service categories</div>
+      <div class="sc-badge" style="background:var(--ltgrn);color:var(--green)">23 Preferred ⭐</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--gold)">
+      <div class="sc-lbl">Field Tickets Processed</div>
+      <div class="sc-val" style="color:var(--amber)">18,340</div>
+      <div class="sc-sub">Total across all wells</div>
+      <div class="sc-badge" style="background:var(--ltamb);color:var(--amber)">96.2% first-pass</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--red)">
+      <div class="sc-lbl">Avg Dispute Rate</div>
+      <div class="sc-val" style="color:var(--red)">3.8%</div>
+      <div class="sc-sub">vs. 11.2% industry est.</div>
+      <div class="sc-badge" style="background:var(--ltred);color:var(--red)">▼ 66% below avg</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--purple)">
+      <div class="sc-lbl">Avg DSO (Service Cos.)</div>
+      <div class="sc-val" style="color:var(--purple)">36 days</div>
+      <div class="sc-sub">vs. 58 day basin avg</div>
+      <div class="sc-badge" style="background:var(--ltpur);color:var(--purple)">▼ 38% faster</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Top Performers -->
+    <div class="card">
+      <div class="card-title">Top Performing Vendors — All Categories</div>
+      <div class="card-sub">Ranked by composite performance score. Score = ticket quality + rate accuracy + dispute rate + mobilization reliability.</div>
+      <table>
+        <thead><tr>
+          <th style="text-align:left">Vendor</th>
+          <th>Category</th>
+          <th>Score</th>
+          <th>Dispute Rate</th>
+          <th>DSO</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody id="topVendorTable"></tbody>
+      </table>
+    </div>
+    <!-- Watch List -->
+    <div class="card">
+      <div class="card-title">Performance Watch List</div>
+      <div class="card-sub">Vendors with declining scores or metrics trending outside acceptable thresholds over last 60 days.</div>
+      <div id="watchAlerts"></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <!-- Spend by Category -->
+    <div class="card">
+      <div class="card-title">Total Spend by Service Category</div>
+      <div class="card-sub">All tracked wells — 12 months</div>
+      <canvas id="spendCatChart" height="220"></canvas>
+    </div>
+    <!-- Dispute Rates by Category -->
+    <div class="card">
+      <div class="card-title">Dispute Rate by Service Category</div>
+      <div class="card-sub">% of tickets disputed — your programs vs. basin average</div>
+      <canvas id="disputeChart" height="220"></canvas>
+    </div>
+    <!-- DSO Trend -->
+    <div class="card">
+      <div class="card-title">Average DSO Trend — 12 Months</div>
+      <div class="card-sub">Days from ticket approval to payment — your programs vs. basin average</div>
+      <canvas id="dsoTrendChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE: VENDOR SCORECARDS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="page-vendors" class="page">
+
+  <div class="filter-row">
+    <span class="filter-lbl">Filter:</span>
+    <select id="catFilter" onchange="renderVendorCards()">
+      <option value="all">All Categories</option>
+      <option value="Directional Drilling">Directional Drilling</option>
+      <option value="Drilling Fluids">Drilling Fluids / Mud</option>
+      <option value="Cementing">Cementing</option>
+      <option value="Rental Tools">Rental Tools</option>
+      <option value="Wireline">Wireline / Logging</option>
+      <option value="Drilling Contractor">Drilling Contractor</option>
+    </select>
+    <select id="statusFilter" onchange="renderVendorCards()">
+      <option value="all">All Status</option>
+      <option value="Preferred">⭐ Preferred Only</option>
+      <option value="Watch">⚠ Watch List</option>
+    </select>
+    <button class="btn btn-primary" onclick="renderVendorCards()">Apply</button>
+  </div>
+
+  <div class="vendor-grid" id="vendorCards"></div>
+
+  <!-- Vendor Detail (shown when card clicked) -->
+  <div id="vendorDetail" class="card" style="display:none">
+    <div class="card-title" id="vd-name"></div>
+    <div class="card-sub" id="vd-cat"></div>
+    <div class="grid-3-1">
+      <div>
+        <div class="sec-lbl">Performance Radar</div>
+        <div class="radar-wrap">
+          <canvas id="radarChart" height="200" width="250"></canvas>
+          <div class="radar-legend" id="radarLegend"></div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-lbl">Key Metrics</div>
+        <div id="vd-metrics"></div>
+      </div>
+    </div>
+    <div class="sec-lbl">Monthly Performance Trend</div>
+    <canvas id="vendorTrendChart" height="120"></canvas>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE: BENCHMARKS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="page-benchmarks" class="page">
+
+  <div class="filter-row">
+    <span class="filter-lbl">Formation:</span>
+    <select><option>Clearwater</option><option>Montney</option><option>Duvernay</option><option>Viking</option></select>
+    <span class="filter-lbl">Well Type:</span>
+    <select><option>Horizontal — 5,000-5,500m</option><option>Horizontal — 3,500-4,500m</option><option>Vertical</option></select>
+    <span class="filter-lbl">Region:</span>
+    <select><option>Central Alberta</option><option>NE British Columbia</option><option>Saskatchewan</option></select>
+    <button class="btn btn-primary">Apply</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cost Benchmarks — Your Programs vs. Basin Average</div>
+    <div class="card-sub">P10 / P50 / P90 ranges from 47 comparable wells in the platform. Blue bar = your average. Gold marker = basin P50.</div>
+    <div id="benchmarkBars"></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Rate Accuracy by Service Category</div>
+      <div class="card-sub">Actual billed vs. contracted rate — positive = overbilled, negative = underbilled</div>
+      <canvas id="rateAccChart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Basin Cost Percentile — Your Programs</div>
+      <div class="card-sub">Where your total well costs land in the basin distribution for comparable well profiles</div>
+      <canvas id="percentileChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE: VENDOR SELECTION -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="page-selection" class="page">
+
+  <div class="card" style="background:linear-gradient(135deg,var(--navy),#0F2540);color:white">
+    <div style="font-size:14px;font-weight:800;color:var(--gold);margin-bottom:6px">🎯 Pre-Well Vendor Selection Tool</div>
+    <div style="font-size:11px;color:#aab;line-height:1.6">Define your upcoming well parameters below. EMI VendorIQ will rank available vendors in each service category based on performance data, rate competitiveness, current availability, and historical compatibility with your operator.</div>
+    <div class="filter-row" style="margin-top:14px;margin-bottom:0">
+      <div>
+        <div style="font-size:9px;color:#778;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Formation</div>
+        <select style="background:#1A2F4A;color:white;border-color:#334;"><option>Clearwater</option><option>Montney</option><option>Duvernay</option></select>
+      </div>
+      <div>
+        <div style="font-size:9px;color:#778;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Target Depth</div>
+        <select style="background:#1A2F4A;color:white;border-color:#334;"><option>5,000–5,500m</option><option>3,500–5,000m</option><option>2,000–3,500m</option></select>
+      </div>
+      <div>
+        <div style="font-size:9px;color:#778;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Operator</div>
+        <select style="background:#1A2F4A;color:white;border-color:#334;"><option>Whitecap Resources</option><option>Cenovus Energy</option><option>CNRL</option></select>
+      </div>
+      <div>
+        <div style="font-size:9px;color:#778;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Spud Date</div>
+        <input type="date" value="2025-07-14" style="background:#1A2F4A;color:white;border-color:#334;">
+      </div>
+      <button class="btn btn-gold" style="margin-top:16px">Generate Rankings →</button>
+    </div>
+  </div>
+
+  <div id="selectionTables"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE: AFE INTELLIGENCE -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="page-afe" class="page">
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">AFE Accuracy — Historical Performance</div>
+      <div class="card-sub">Final actual cost vs. approved AFE — last 47 wells. Green = under AFE, Red = over.</div>
+      <canvas id="afeAccChart" height="240"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Most Common AFE Overrun Categories</div>
+      <div class="card-sub">Which line items most frequently exceed budget — frequency and average overrun %</div>
+      <canvas id="overrunChart" height="240"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">AFE Line Item Benchmarks — Clearwater 5,000–5,500m Horizontal</div>
+    <div class="card-sub">P10 / P50 / P90 range from 47 comparable wells. Your average shown in blue. Use to validate future AFE estimates.</div>
+    <div id="afeLineBars"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE: ALERTS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="page-alerts" class="page">
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🔴 Critical Alerts</div>
+      <div class="card-sub">Requiring immediate attention</div>
+      <div id="alertsCritical"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🟡 Watch Alerts</div>
+      <div class="card-sub">Monitor closely — action may be required</div>
+      <div id="alertsWatch"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🟢 Positive Signals</div>
+    <div class="card-sub">Performance improvements and opportunities</div>
+    <div id="alertsPositive"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── VENDOR DATA ──────────────────────────────────────────────────────────
+const vendors = [
+  { name:"Advantage Directional",cat:"Directional Drilling",score:91,ticketQ:93,rateAcc:97,disputeR:2.1,mobRel:92,nptCont:3.2,dso:31,wells:18,preferred:true,trend:'up',status:'green',
+    monthly:[88,89,90,91,89,92,91,93,91,90,92,91] },
+  { name:"Precision Directional",cat:"Directional Drilling",score:78,ticketQ:81,rateAcc:88,disputeR:6.8,mobRel:74,nptCont:7.1,dso:44,wells:12,preferred:false,trend:'dn',status:'amber',
+    monthly:[84,83,82,80,79,77,78,76,75,78,77,78] },
+  { name:"Newpark Drilling Fluids",cat:"Drilling Fluids",score:88,ticketQ:90,rateAcc:94,disputeR:3.4,mobRel:88,nptCont:4.8,dso:33,wells:22,preferred:true,trend:'fl',status:'green',
+    monthly:[86,87,88,87,88,89,88,88,87,89,88,88] },
+  { name:"Calfrac Well Services",cat:"Cementing",score:85,ticketQ:87,rateAcc:91,disputeR:4.2,mobRel:86,nptCont:5.1,dso:38,wells:19,preferred:true,trend:'up',status:'green',
+    monthly:[80,81,82,84,83,84,85,85,86,85,85,85] },
+  { name:"BJ Energy Solutions",cat:"Rental Tools",score:72,ticketQ:74,rateAcc:84,disputeR:9.6,mobRel:70,nptCont:8.4,dso:52,wells:14,preferred:false,trend:'dn',status:'red',
+    monthly:[80,79,78,77,76,74,73,72,71,72,72,72] },
+  { name:"Trican Well Service",cat:"Cementing",score:82,ticketQ:84,rateAcc:89,disputeR:5.1,mobRel:83,nptCont:6.2,dso:41,wells:11,preferred:false,trend:'up',status:'green',
+    monthly:[76,77,79,80,81,82,81,82,83,82,82,82] },
+  { name:"Turbo Drill Industries",cat:"Directional Drilling",score:94,ticketQ:96,rateAcc:98,disputeR:1.4,mobRel:95,nptCont:2.1,dso:28,wells:9,preferred:true,trend:'up',status:'green',
+    monthly:[90,91,92,93,93,94,94,95,94,95,94,94] },
+  { name:"Precision Drilling #427",cat:"Drilling Contractor",score:89,ticketQ:91,rateAcc:95,disputeR:2.8,mobRel:90,nptCont:3.9,dso:34,wells:15,preferred:true,trend:'fl',status:'green',
+    monthly:[87,88,88,89,89,88,90,89,89,90,89,89] },
+  { name:"Key Energy Services",cat:"Rental Tools",score:86,ticketQ:88,rateAcc:92,disputeR:3.8,mobRel:87,nptCont:4.5,dso:36,wells:16,preferred:true,trend:'up',status:'green',
+    monthly:[82,83,84,84,85,85,86,86,86,87,86,86] },
+];
+
+// ── TOP VENDOR TABLE ──────────────────────────────────────────────────────
+const sorted = [...vendors].sort((a,b)=>b.score-a.score);
+const topTbl = document.getElementById('topVendorTable');
+sorted.slice(0,8).forEach(v=>{
+  const tr=document.createElement('tr');
+  const scoreColor=v.score>=85?'var(--green)':v.score>=75?'var(--amber)':'var(--red)';
+  tr.innerHTML=`
+    <td>${v.preferred?'⭐ ':''}${v.name}</td>
+    <td style="text-align:right"><span class="pill pill-blue">${v.cat}</span></td>
+    <td><div class="score-bar-wrap"><div class="score-bar-bg"><div class="score-bar-fill" style="width:${v.score}%;background:${scoreColor}"></div></div><span class="score-num" style="color:${scoreColor}">${v.score}</span></div></td>
+    <td style="color:${v.disputeR<5?'var(--green)':v.disputeR<8?'var(--amber)':'var(--red)'};font-weight:700">${v.disputeR}%</td>
+    <td style="color:${v.dso<40?'var(--green)':v.dso<50?'var(--amber)':'var(--red)'};font-weight:700">${v.dso}d</td>
+    <td><span class="pill ${v.preferred?'pill-gold':v.status==='amber'?'pill-amber':'pill-green'}">${v.preferred?'⭐ Preferred':v.status==='amber'?'⚠ Watch':'✓ Active'}</span></td>
+  `;
+  topTbl.appendChild(tr);
+});
+
+// ── WATCH LIST ────────────────────────────────────────────────────────────
+const watchContainer = document.getElementById('watchAlerts');
+const watchVendors = vendors.filter(v=>!v.preferred||v.trend==='dn');
+watchVendors.forEach(v=>{
+  const el=document.createElement('div');
+  el.className='alert-item';
+  el.style.background=v.score<75?'var(--ltred)':'var(--ltamb)';
+  el.style.borderLeft=`3px solid ${v.score<75?'var(--red)':'var(--amber)'}`;
+  el.innerHTML=`<div class="ai-icon">${v.score<75?'🔴':'🟡'}</div><div><div class="ai-title" style="color:${v.score<75?'var(--red)':'var(--amber)'}">${v.name} — ${v.cat}</div><div class="ai-body" style="color:var(--dgray)">Score: ${v.score}/100 &nbsp;·&nbsp; Dispute rate: ${v.disputeR}% &nbsp;·&nbsp; DSO: ${v.dso} days &nbsp;·&nbsp; Trend: ${v.trend==='dn'?'↓ Declining':'→ Flat'}</div></div>`;
+  watchContainer.appendChild(el);
+});
+
+// ── VENDOR CARDS ──────────────────────────────────────────────────────────
+function renderVendorCards(){
+  const cat=document.getElementById('catFilter').value;
+  const status=document.getElementById('statusFilter').value;
+  const container=document.getElementById('vendorCards');
+  container.innerHTML='';
+  document.getElementById('vendorDetail').style.display='none';
+
+  const filtered=vendors.filter(v=>{
+    const catOk=cat==='all'||v.cat===cat;
+    const statusOk=status==='all'||(status==='Preferred'&&v.preferred)||(status==='Watch'&&!v.preferred);
+    return catOk&&statusOk;
+  });
+
+  filtered.forEach(v=>{
+    const scoreColor=v.score>=85?'var(--green)':v.score>=75?'var(--amber)':'var(--red)';
+    const borderColor=v.preferred?'var(--gold)':scoreColor;
+    const card=document.createElement('div');
+    card.className='vendor-card';
+    card.style.borderColor=borderColor;
+    card.innerHTML=`
+      ${v.preferred?'<div class="vc-preferred">⭐ PREFERRED VENDOR</div>':''}
+      <div class="vc-name">${v.name}</div>
+      <div class="vc-cat">${v.cat} &nbsp;·&nbsp; ${v.wells} wells tracked</div>
+      <div class="vc-score" style="color:${scoreColor}">${v.score}<span style="font-size:14px;font-weight:400;color:#888">/100</span></div>
+      <div style="font-size:10px;color:#888;margin-bottom:6px">Composite Score &nbsp;${v.trend==='up'?'<span class="trend-up">↑ Improving</span>':v.trend==='dn'?'<span class="trend-dn">↓ Declining</span>':'<span class="trend-fl">→ Stable</span>'}</div>
+      <div class="vc-metrics">
+        <div class="vc-metric"><div class="vc-metric-lbl">Ticket Quality</div><div class="vc-metric-val" style="color:${v.ticketQ>=85?'var(--green)':'var(--amber)'}">${v.ticketQ}%</div></div>
+        <div class="vc-metric"><div class="vc-metric-lbl">Dispute Rate</div><div class="vc-metric-val" style="color:${v.disputeR<5?'var(--green)':v.disputeR<8?'var(--amber)':'var(--red)'}">${v.disputeR}%</div></div>
+        <div class="vc-metric"><div class="vc-metric-lbl">Rate Accuracy</div><div class="vc-metric-val" style="color:${v.rateAcc>=90?'var(--green)':'var(--amber)'}">${v.rateAcc}%</div></div>
+        <div class="vc-metric"><div class="vc-metric-lbl">Avg DSO</div><div class="vc-metric-val" style="color:${v.dso<40?'var(--green)':v.dso<50?'var(--amber)':'var(--red)'}">${v.dso}d</div></div>
+      </div>
+    `;
+    card.onclick=()=>showVendorDetail(v);
+    container.appendChild(card);
+  });
+}
+renderVendorCards();
+
+let radarChartInst=null, trendChartInst=null;
+function showVendorDetail(v){
+  document.getElementById('vendorDetail').style.display='block';
+  document.getElementById('vd-name').textContent=v.name+(v.preferred?' ⭐':'');
+  document.getElementById('vd-cat').textContent=`${v.cat} · ${v.wells} wells tracked · Composite Score: ${v.score}/100`;
+
+  // Radar
+  if(radarChartInst)radarChartInst.destroy();
+  const rCtx=document.getElementById('radarChart').getContext('2d');
+  radarChartInst=new Chart(rCtx,{type:'radar',data:{
+    labels:['Ticket Quality','Rate Accuracy','Mobilization','NPT Control','Invoice Speed'],
+    datasets:[
+      {label:v.name,data:[v.ticketQ,v.rateAcc,v.mobRel,100-v.nptCont*5,100-(v.dso-20)*1.5],borderColor:'var(--blue)',backgroundColor:'rgba(46,117,182,0.15)',borderWidth:2,pointRadius:3},
+      {label:'Basin Avg',data:[78,84,76,72,70],borderColor:'var(--gold)',backgroundColor:'rgba(201,168,76,0.08)',borderDash:[4,3],borderWidth:1.5,pointRadius:2}
+    ]
+  },options:{responsive:true,plugins:{legend:{display:false}},scales:{r:{min:50,max:100,ticks:{font:{size:8},stepSize:10},pointLabels:{font:{size:9}}}}}});
+
+  // Metrics panel
+  document.getElementById('vd-metrics').innerHTML=`
+    <div class="mini-kpi-grid">
+      <div class="mini-kpi"><div class="mk-val" style="color:${v.score>=85?'var(--green)':'var(--amber)'}">${v.score}</div><div class="mk-lbl">Overall Score</div></div>
+      <div class="mini-kpi"><div class="mk-val" style="color:${v.disputeR<5?'var(--green)':'var(--red)'}">${v.disputeR}%</div><div class="mk-lbl">Dispute Rate</div><div class="mk-vs" style="color:#888">avg 11.2%</div></div>
+      <div class="mini-kpi"><div class="mk-val" style="color:${v.dso<40?'var(--green)':'var(--red)'}">${v.dso}d</div><div class="mk-lbl">Avg DSO</div><div class="mk-vs" style="color:#888">avg 58d</div></div>
+      <div class="mini-kpi"><div class="mk-val" style="color:${v.nptCont<5?'var(--green)':'var(--red)'}">${v.nptCont}%</div><div class="mk-lbl">NPT Contrib.</div><div class="mk-vs" style="color:#888">avg 6.8%</div></div>
+    </div>
+  `;
+
+  // Trend
+  if(trendChartInst)trendChartInst.destroy();
+  const tCtx=document.getElementById('vendorTrendChart').getContext('2d');
+  const months=['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'];
+  trendChartInst=new Chart(tCtx,{type:'line',data:{
+    labels:months,
+    datasets:[{label:'Score',data:v.monthly,borderColor:'var(--blue)',backgroundColor:'rgba(46,117,182,0.08)',borderWidth:2,pointRadius:3,tension:0.3,fill:true}]
+  },options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:60,max:100,ticks:{font:{size:9}},grid:{color:'#eee'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+
+  document.getElementById('vendorDetail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── OVERVIEW CHARTS ───────────────────────────────────────────────────────
+const c1=document.getElementById('spendCatChart').getContext('2d');
+new Chart(c1,{type:'doughnut',data:{
+  labels:['Drilling Contractor','Directional','Mud/Fluids','Cementing','Casing/Tubulars','Bits','Rentals','Wireline','Other'],
+  data:[32,14,12,8,18,3,5,4,4],
+  datasets:[{data:[32,14,12,8,18,3,5,4,4],backgroundColor:['#1A3A5C','#2E75B6','#C9A84C','#1A7A3C','#5C3A1A','#D4811A','#6B3FA0','#1A7A7A','#888'],borderWidth:2,borderColor:'#fff'}]
+},options:{responsive:true,cutout:'55%',plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:10,padding:4}}}}});
+
+const c2=document.getElementById('disputeChart').getContext('2d');
+new Chart(c2,{type:'bar',data:{
+  labels:['Drilling','Directional','Mud','Cement','Rentals','Wireline'],
+  datasets:[
+    {label:'Your Programs',data:[2.8,3.2,3.4,4.1,7.2,2.9],backgroundColor:'rgba(46,117,182,0.8)',borderRadius:3},
+    {label:'Basin Average',data:[7.1,8.4,6.8,9.2,13.1,5.8],backgroundColor:'rgba(201,168,76,0.5)',borderRadius:3}
+  ]
+},options:{responsive:true,plugins:{legend:{labels:{font:{size:9},boxWidth:10}}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{ticks:{font:{size:9},callback:v=>v+'%'},grid:{color:'#eee'}}}}});
+
+const c3=document.getElementById('dsoTrendChart').getContext('2d');
+const months6=['Dec','Jan','Feb','Mar','Apr','May'];
+new Chart(c3,{type:'line',data:{
+  labels:months6,
+  datasets:[
+    {label:'Your Programs',data:[42,40,39,37,36,36],borderColor:'var(--blue)',backgroundColor:'rgba(46,117,182,0.1)',borderWidth:2,pointRadius:3,tension:0.3,fill:true},
+    {label:'Basin Average',data:[60,59,59,58,58,58],borderColor:'var(--gold)',borderDash:[5,4],borderWidth:2,pointRadius:0,fill:false}
+  ]
+},options:{responsive:true,plugins:{legend:{labels:{font:{size:9},boxWidth:10}}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{ticks:{font:{size:9},callback:v=>v+'d'},grid:{color:'#eee'}}}}});
+
+// ── BENCHMARKS ────────────────────────────────────────────────────────────
+const benchData=[
+  {cat:'Drilling Contractor',p10:980000,p50:1280000,p90:1620000,yours:1107600},
+  {cat:'Directional Drilling',p10:280000,p50:390000,p90:520000,yours:340200},
+  {cat:'Drilling Fluids',p10:290000,p50:370000,p90:480000,yours:341000},
+  {cat:'Cementing',p10:140000,p50:188000,p90:260000,yours:118400},
+  {cat:'Casing & Tubulars',p10:420000,p50:560000,p90:720000,yours:496800},
+  {cat:'Rental Tools',p10:88000,p50:138000,p90:195000,yours:106500},
+  {cat:'Wireline/Logging',p10:82000,p50:122000,p90:168000,yours:74240},
+];
+const benchContainer=document.getElementById('benchmarkBars');
+const maxVal=1800000;
+benchData.forEach(b=>{
+  const yourPct=(b.yours/maxVal*100).toFixed(1);
+  const p10Pct=(b.p10/maxVal*100).toFixed(1);
+  const p50Pct=(b.p50/maxVal*100).toFixed(1);
+  const p90Pct=(b.p90/maxVal*100).toFixed(1);
+  const belowAvg=b.yours<b.p50;
+  const el=document.createElement('div');
+  el.className='afe-row';
+  el.innerHTML=`
+    <div class="afe-cat" style="font-size:11px">${b.cat}</div>
+    <div class="afe-bars">
+      <div class="afe-bar-row"><div class="afe-bar-lbl" style="color:var(--blue)">Yours</div>
+        <div class="afe-bar-track"><div class="afe-bar-fill" style="width:${yourPct}%;background:${belowAvg?'var(--blue)':'var(--amber)'}"></div></div>
+        <div class="afe-val" style="color:${belowAvg?'var(--green)':'var(--amber)'}">$${(b.yours/1000).toFixed(0)}K</div>
+      </div>
+      <div class="afe-bar-row"><div class="afe-bar-lbl" style="color:#888">P10–P90</div>
+        <div class="afe-bar-track" style="position:relative">
+          <div style="position:absolute;left:${p10Pct}%;width:${p90Pct-p10Pct}%;height:100%;background:rgba(201,168,76,0.25);border-radius:5px"></div>
+          <div class="bench-marker" style="left:${p50Pct}%"></div>
+        </div>
+        <div class="afe-val" style="color:#888">$${(b.p10/1000).toFixed(0)}K–$${(b.p90/1000).toFixed(0)}K</div>
+      </div>
+    </div>
+    <span class="pill ${belowAvg?'pill-green':'pill-amber'}" style="min-width:80px;text-align:center">${belowAvg?'▼ Below P50':'▲ Above P50'}</span>
+  `;
+  benchContainer.appendChild(el);
+});
+
+// Rate accuracy chart
+const ra=document.getElementById('rateAccChart').getContext('2d');
+new Chart(ra,{type:'bar',data:{
+  labels:['Drilling','Directional','Mud','Cement','Rentals','Wireline','Fuel'],
+  datasets:[{label:'Rate Variance %',data:[0.8,-1.2,4.6,-0.4,2.1,-0.8,1.4],
+    backgroundColor:d=>d.raw>0?'rgba(192,57,43,0.7)':'rgba(26,122,60,0.7)',
+    borderRadius:3}]
+},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{ticks:{font:{size:9},callback:v=>v+'%'},grid:{color:'#eee'}}}}});
+
+// Percentile chart
+const pc=document.getElementById('percentileChart').getContext('2d');
+new Chart(pc,{type:'bar',data:{
+  labels:['Well 1','Well 2','Well 3','Well 4','Well 5','Well 6','Well 7','Well 8','Well 9','Well 10'],
+  datasets:[{label:'Your Cost Percentile',data:[42,38,61,29,44,72,35,41,28,33],
+    backgroundColor:d=>d.raw>60?'rgba(192,57,43,0.7)':d.raw>45?'rgba(212,129,26,0.7)':'rgba(26,122,60,0.7)',
+    borderRadius:3}]
+},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},callback:v=>v+'th'},grid:{color:'#eee'}}}}});
+
+// ── VENDOR SELECTION ──────────────────────────────────────────────────────
+const selCategories=[
+  {cat:'Directional Drilling',vendors:[
+    {name:'Turbo Drill Industries',score:94,rate:'$3,200/day',vs:'Market avg $3,580',avail:'✅ Available',npt:'2.1%',disp:'1.4%',preferred:true},
+    {name:'Advantage Directional',score:91,rate:'$3,150/day',vs:'Market avg $3,580',avail:'✅ Available',npt:'3.2%',disp:'2.1%',preferred:true},
+    {name:'Precision Directional',score:78,rate:'$3,050/day',vs:'Market avg $3,580',avail:'⚠ Limited',npt:'7.1%',disp:'6.8%',preferred:false},
+  ]},
+  {cat:'Drilling Fluids / Mud',vendors:[
+    {name:'Newpark Drilling Fluids',score:88,rate:'$2,800/day + chem',vs:'Market avg $3,100',avail:'✅ Available',npt:'4.8%',disp:'3.4%',preferred:true},
+    {name:'Halliburton Fluids',score:82,rate:'$3,100/day + chem',vs:'Market avg $3,100',avail:'✅ Available',npt:'5.9%',disp:'5.1%',preferred:false},
+    {name:'Secure Fluids',score:76,rate:'$2,650/day + chem',vs:'Market avg $3,100',avail:'⛔ Committed',npt:'8.2%',disp:'7.4%',preferred:false},
+  ]},
+  {cat:'Cementing',vendors:[
+    {name:'Calfrac Well Services',score:85,rate:'Job rate',vs:'$42K avg P50',avail:'✅ Available',npt:'5.1%',disp:'4.2%',preferred:true},
+    {name:'Trican Well Service',score:82,rate:'Job rate',vs:'$42K avg P50',avail:'✅ Available',npt:'6.2%',disp:'5.1%',preferred:false},
+  ]},
+  {cat:'Rental Tools',vendors:[
+    {name:'Key Energy Services',score:86,rate:'$1,850/day',vs:'Market avg $2,100',avail:'✅ Available',npt:'4.5%',disp:'3.8%',preferred:true},
+    {name:'BJ Energy Solutions',score:72,rate:'$1,680/day',vs:'Market avg $2,100',avail:'✅ Available',npt:'8.4%',disp:'9.6%',preferred:false},
+  ]},
+];
+
+const selContainer=document.getElementById('selectionTables');
+selCategories.forEach(cat=>{
+  const div=document.createElement('div');
+  div.className='card';
+  div.innerHTML=`
+    <div class="card-title">${cat.cat}</div>
+    <div class="card-sub">Ranked by composite performance score — rate competitiveness, NPT contribution, dispute rate, availability. Recommended: top-ranked available vendor.</div>
+    <table>
+      <thead><tr>
+        <th style="text-align:left">Vendor</th>
+        <th>Score</th>
+        <th>Day Rate / Unit</th>
+        <th>vs. Market</th>
+        <th>NPT Contrib.</th>
+        <th>Dispute Rate</th>
+        <th>Availability</th>
+        <th>Recommend</th>
+      </tr></thead>
+      <tbody>${cat.vendors.map((v,i)=>`
+        <tr ${i===0?'style="background:rgba(26,122,60,0.05)"':''}>
+          <td>${v.preferred?'⭐ ':''}${v.name}</td>
+          <td><div class="score-bar-wrap"><div class="score-bar-bg"><div class="score-bar-fill" style="width:${v.score}%;background:${v.score>=85?'var(--green)':v.score>=75?'var(--amber)':'var(--red)'}"></div></div><span class="score-num" style="color:${v.score>=85?'var(--green)':v.score>=75?'var(--amber)':'var(--red)'}">${v.score}</span></div></td>
+          <td style="font-weight:700">${v.rate}</td>
+          <td style="color:var(--green);font-size:10px">${v.vs}</td>
+          <td style="color:${parseFloat(v.npt)<5?'var(--green)':parseFloat(v.npt)<8?'var(--amber)':'var(--red)'};font-weight:700">${v.npt}</td>
+          <td style="color:${parseFloat(v.disp)<5?'var(--green)':parseFloat(v.disp)<8?'var(--amber)':'var(--red)'};font-weight:700">${v.disp}</td>
+          <td>${v.avail}</td>
+          <td><span class="pill ${i===0?'pill-green':'pill-navy'}">${i===0?'✅ Recommended':'Consider'}</span></td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  `;
+  selContainer.appendChild(div);
+});
+
+// ── AFE INTELLIGENCE ──────────────────────────────────────────────────────
+const afeAcc=document.getElementById('afeAccChart').getContext('2d');
+const wellNums=Array.from({length:20},(_,i)=>'W-'+(i+1).toString().padStart(2,'0'));
+const variances=[-3.2,8.1,-1.4,12.6,-0.8,4.2,-2.1,18.4,-4.8,2.9,-1.1,7.3,-3.6,15.2,-0.4,3.1,-2.8,9.7,-5.1,1.4];
+new Chart(afeAcc,{type:'bar',data:{
+  labels:wellNums,
+  datasets:[{label:'AFE Variance %',data:variances,
+    backgroundColor:variances.map(v=>v>10?'rgba(192,57,43,0.8)':v>0?'rgba(212,129,26,0.7)':'rgba(26,122,60,0.7)'),
+    borderRadius:3}]
+},options:{responsive:true,plugins:{legend:{display:false}},scales:{
+  x:{ticks:{font:{size:9}},grid:{display:false}},
+  y:{ticks:{font:{size:9},callback:v=>v+'%'},grid:{color:'#eee'}}
+}}});
+
+const overrun=document.getElementById('overrunChart').getContext('2d');
+new Chart(overrun,{type:'bar',data:{
+  labels:['Mud/Fluids','NPT — Rig','Directional','Rentals','Cementing','Bits','Fuel'],
+  datasets:[
+    {label:'Frequency Over AFE %',data:[68,61,42,38,29,18,12],backgroundColor:'rgba(192,57,43,0.7)',borderRadius:3,yAxisID:'y'},
+    {label:'Avg Overrun %',data:[18.4,22.1,8.6,11.2,4.8,3.2,2.1],backgroundColor:'rgba(201,168,76,0.6)',borderRadius:3,yAxisID:'y1'},
+  ]
+},options:{responsive:true,plugins:{legend:{labels:{font:{size:9},boxWidth:10}}},scales:{
+  x:{ticks:{font:{size:9}},grid:{display:false}},
+  y:{ticks:{font:{size:9},callback:v=>v+'%'},grid:{color:'#eee'},title:{display:true,text:'Freq %',font:{size:9}}},
+  y1:{position:'right',ticks:{font:{size:9},callback:v=>v+'%'},grid:{display:false},title:{display:true,text:'Avg Overrun',font:{size:9}}}
+}}});
+
+// AFE line benchmarks
+const afeLineData=[
+  {cat:'Drilling Contractor',p10:980,p50:1280,p90:1620,yours:1108},
+  {cat:'Directional Drilling',p10:280,p50:390,p90:520,yours:340},
+  {cat:'Drilling Fluids / Mud',p10:290,p50:370,p90:480,yours:341},
+  {cat:'Cementing',p10:140,p50:188,p90:260,yours:118},
+  {cat:'Casing & Tubulars',p10:420,p50:560,p90:720,yours:497},
+  {cat:'Rental Tools',p10:88,p50:138,p90:195,yours:107},
+  {cat:'Wireline / Logging',p10:82,p50:122,p90:168,yours:74},
+  {cat:'Fuel',p10:48,p50:68,p90:95,yours:48},
+];
+const afeLineContainer=document.getElementById('afeLineBars');
+const maxAfe=1700;
+afeLineData.forEach(b=>{
+  const yp=(b.yours/maxAfe*100).toFixed(1);
+  const p10p=(b.p10/maxAfe*100).toFixed(1);
+  const p50p=(b.p50/maxAfe*100).toFixed(1);
+  const p90p=(b.p90/maxAfe*100).toFixed(1);
+  const good=b.yours<=b.p50;
+  const el=document.createElement('div');
+  el.className='afe-row';
+  el.innerHTML=`
+    <div class="afe-cat">${b.cat}</div>
+    <div class="afe-bars">
+      <div class="afe-bar-row">
+        <div class="afe-bar-lbl" style="color:var(--blue)">Yours</div>
+        <div class="afe-bar-track"><div class="afe-bar-fill" style="width:${yp}%;background:${good?'var(--blue)':'var(--amber)'}"></div></div>
+        <div class="afe-val" style="color:${good?'var(--green)':'var(--amber)'}">$${b.yours}K</div>
+      </div>
+      <div class="afe-bar-row">
+        <div class="afe-bar-lbl" style="color:#888">P10–P90</div>
+        <div class="afe-bar-track" style="position:relative">
+          <div style="position:absolute;left:${p10p}%;width:${p90p-p10p}%;height:100%;background:rgba(201,168,76,0.25);border-radius:5px"></div>
+          <div class="bench-marker" style="left:${p50p}%"></div>
+        </div>
+        <div class="afe-val" style="color:#888">$${b.p10}K – $${b.p90}K</div>
+      </div>
+    </div>
+    <span class="pill ${good?'pill-green':'pill-amber'}" style="min-width:90px;text-align:center">${good?'✓ At/Below P50':'Above P50'}</span>
+  `;
+  afeLineContainer.appendChild(el);
+});
+
+// ── ALERTS ────────────────────────────────────────────────────────────────
+const critical=[
+  {icon:'🔴',title:'BJ Energy Solutions — Dispute Rate Critical',body:'Dispute rate has risen to 9.6% over last 90 days — significantly above the 5% threshold for Preferred status. 4 of last 8 tickets required revision before approval. Recommend performance review meeting before next well.',color:'var(--red)',bg:'var(--ltred)'},
+  {icon:'🔴',title:'Mud Cost Trending — Clearwater 14-22 Active Well',body:'Mud chemical spend is $47K above AFE at Day 29 with 5 days remaining. Projected overrun: $68K. Consider AFE supplement if lateral extends beyond plan.',color:'var(--red)',bg:'var(--ltred)'},
+];
+const watch=[
+  {icon:'🟡',title:'Precision Directional — Declining Score',body:'Composite score has dropped from 84 to 78 over 6 months. NPT contribution increased from 4.2% to 7.1%. Possible crew change — verify with account rep before committing to next program.',color:'var(--amber)',bg:'var(--ltamb)'},
+  {icon:'🟡',title:'Basin Directional Rates Rising',body:'Average directional day rate has increased 8.4% in the last 90 days (AB Montney/Clearwater). Current contracts locked — consider extending terms on preferred vendors before renewal.',color:'var(--amber)',bg:'var(--ltamb)'},
+  {icon:'🟡',title:'Rental Tool Invoice Lag — BJ Energy',body:'Average invoice submission time from BJ Energy has increased from 3 days to 11 days over last 60 days. Potential AP staffing issue. Monitor DSO impact.',color:'var(--amber)',bg:'var(--ltamb)'},
+];
+const positive=[
+  {icon:'🟢',title:'Turbo Drill Industries — New Preferred Status Achieved',body:'Turbo Drill has achieved Preferred Vendor status after 9 wells — 94 composite score, 1.4% dispute rate, 28-day DSO. Recommend first-call status for all upcoming directional programs.',color:'var(--green)',bg:'var(--ltgrn)'},
+  {icon:'🟢',title:'Your Programs DSO — 36 Days vs. 58 Day Basin Average',body:'EMI-managed programs are paying service companies 38% faster than basin average. Recommend leveraging this in upcoming Newpark and Calfrac contract renewals to negotiate rate concessions.',color:'var(--green)',bg:'var(--ltgrn)'},
+  {icon:'🟢',title:'AFE Accuracy Improving — Last 6 Wells Average +2.1% Variance',body:'Down from +8.4% average variance on the preceding 6 wells. Improved AFE estimation on mud and NPT contingency lines driving the improvement.',color:'var(--green)',bg:'var(--ltgrn)'},
+  {icon:'🟢',title:'Key Energy Services — Rate Saving vs. Market',body:'Key Energy rental tool rates are averaging 11.8% below market rate across 16 wells. Estimated annual saving vs. market: $89K. Preferred status justified.',color:'var(--green)',bg:'var(--ltgrn)'},
+];
+
+function renderAlerts(alerts,containerId){
+  const c=document.getElementById(containerId);
+  alerts.forEach(a=>{
+    const el=document.createElement('div');
+    el.className='alert-item';
+    el.style.background=a.bg;
+    el.style.borderLeft=`3px solid ${a.color}`;
+    el.innerHTML=`<div class="ai-icon">${a.icon}</div><div><div class="ai-title" style="color:${a.color}">${a.title}</div><div class="ai-body" style="color:var(--dgray)">${a.body}</div></div>`;
+    c.appendChild(el);
+  });
+}
+renderAlerts(critical,'alertsCritical');
+renderAlerts(watch,'alertsWatch');
+renderAlerts(positive,'alertsPositive');
+
+</script>
+</body>
+</html>

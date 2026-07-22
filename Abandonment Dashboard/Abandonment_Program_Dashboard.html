@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abandonment AFE Dashboard — EMI CostTrack™</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#1A3A5C;--blue:#2E75B6;--ltblue:#D5E8F0;
+  --gold:#C9A84C;--ltgold:#FFF8E7;
+  --green:#1A7A3C;--ltgrn:#E6F4EC;
+  --red:#C0392B;--ltred:#FDECEA;
+  --amber:#D4811A;--ltamb:#FEF3E2;
+  --lgray:#F4F5F7;--mgray:#DDE1E9;--dgray:#4A4A4A;--white:#FFFFFF;
+  --teal:#1A6B6B;--ltteal:#E0F2F2;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#ECEEF2;color:var(--navy);min-height:100vh;}
+
+/* TOP BAR */
+.topbar{background:var(--navy);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.topbar-logo{font-size:18px;font-weight:800;color:var(--gold);letter-spacing:0.5px;}
+.topbar-sub{font-size:11px;color:#aab;}
+.topbar-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.well-badge{background:rgba(201,168,76,0.18);border:1px solid var(--gold);border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--gold);}
+.status-live{display:flex;align-items:center;gap:6px;background:rgba(26,122,60,0.2);border:1px solid #1A7A3C;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#4AE080;}
+.pulse{width:7px;height:7px;border-radius:50%;background:#4AE080;animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+.topbar-date{font-size:11px;color:#889;}
+
+/* CONTAINER */
+.container{padding:20px 24px;max-width:1400px;margin:0 auto;}
+
+/* WELL SELECTOR */
+.well-selector-wrap{background:var(--white);border-radius:8px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-left:4px solid var(--blue);box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.sel-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+.well-select{background:var(--navy);color:var(--white);border:none;border-radius:6px;padding:8px 36px 8px 14px;font-size:13px;font-weight:700;cursor:pointer;min-width:380px;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23C9A84C' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.well-select option{background:#1A3A5C;}
+
+/* WELL INFO BAR */
+.well-info{background:var(--white);border-radius:8px;padding:14px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;border-left:4px solid var(--gold);box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.wi-item{display:flex;flex-direction:column;}
+.wi-label{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+.wi-value{font-size:13px;font-weight:700;color:var(--navy);}
+.wi-divider{width:1px;background:var(--mgray);align-self:stretch;}
+
+/* AER COMPLIANCE */
+.compliance-bar{background:var(--white);border-radius:8px;padding:12px 20px;margin-bottom:16px;border-left:4px solid var(--teal);box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.comp-title{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;}
+.comp-items{display:flex;flex-wrap:wrap;gap:7px;}
+.comp-pill{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid;}
+.cp-pass{background:var(--ltgrn);color:var(--green);border-color:var(--green);}
+.cp-pend{background:var(--ltamb);color:var(--amber);border-color:var(--amber);}
+.cp-due{background:var(--ltred);color:var(--red);border-color:var(--red);}
+.cp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--white);border-radius:8px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.07);border-top:3px solid;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;bottom:0;right:0;width:50px;height:50px;border-radius:50% 0 0 0;opacity:0.07;}
+.sc-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;}
+.sc-value{font-size:22px;font-weight:800;margin-bottom:2px;line-height:1;}
+.sc-sub{font-size:10px;color:#888;}
+.sc-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px;}
+
+/* PHASE TRACKER */
+.phase-track{display:flex;align-items:center;margin-bottom:16px;}
+.phase-seg{flex:1;text-align:center;padding:8px 4px;font-size:10px;font-weight:700;border-radius:4px;position:relative;}
+.phase-seg::after{content:'▶';position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:10px;color:#aab;z-index:1;}
+.phase-seg:last-child::after{display:none;}
+.phase-spacer{width:12px;flex-shrink:0;}
+.phase-complete{background:var(--navy);color:var(--white);}
+.phase-active{background:var(--gold);color:var(--navy);animation:phaseGlow 2s infinite;}
+.phase-pending{background:var(--mgray);color:#888;}
+@keyframes phaseGlow{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}50%{box-shadow:0 0 0 4px rgba(201,168,76,0.2)}}
+.phase-days{font-size:9px;font-weight:400;display:block;margin-top:1px;opacity:0.85;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:16px;}
+.chart-card{background:var(--white);border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.chart-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.chart-sub{font-size:10px;color:#888;margin-bottom:14px;}
+.curve-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;}
+.cl-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--dgray);}
+.cl-line{width:20px;height:3px;border-radius:2px;}
+.cl-dash{width:20px;height:0;border-top:2px dashed;}
+.mini-metric{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.mm-card{flex:1;min-width:90px;background:var(--lgray);border-radius:6px;padding:10px 12px;text-align:center;}
+.mm-val{font-size:18px;font-weight:800;color:var(--navy);}
+.mm-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;}
+.mm-vs{font-size:9px;margin-top:2px;}
+
+/* SECTION LABEL */
+.section-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mgray);}
+
+/* TABLES */
+.table-card{background:var(--white);border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:16px;}
+.table-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--navy);color:var(--white);padding:9px 12px;text-align:right;font-weight:600;font-size:11px;}
+thead th:first-child{text-align:left;border-radius:4px 0 0 0;}
+thead th:last-child{border-radius:0 4px 0 0;}
+tbody tr{border-bottom:1px solid var(--mgray);}
+tbody tr:nth-child(even){background:var(--lgray);}
+tbody tr:hover{background:var(--ltblue);}
+tbody td{padding:9px 12px;text-align:right;}
+tbody td:first-child{text-align:left;font-weight:600;}
+tfoot td{padding:10px 12px;text-align:right;font-weight:700;background:var(--navy);color:var(--white);}
+tfoot td:first-child{text-align:left;border-radius:0 0 0 4px;}
+tfoot td:last-child{border-radius:0 0 4px 0;}
+.vbar-wrap{display:flex;align-items:center;gap:8px;}
+.vbar-bg{flex:1;height:8px;background:var(--mgray);border-radius:4px;overflow:hidden;min-width:80px;}
+.vbar-fill{height:100%;border-radius:4px;}
+.vpct{font-size:10px;font-weight:700;min-width:36px;text-align:right;}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
+
+/* BOTTOM ROW */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:6px;margin-bottom:8px;font-size:11px;}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-title{font-weight:700;font-size:11px;margin-bottom:2px;}
+.alert-body{color:var(--dgray);font-size:10px;line-height:1.4;}
+
+/* DOWNLOAD BAR */
+.dl-bar{background:var(--white);border-radius:8px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:3px solid var(--gold);box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.dl-info{font-size:12px;color:var(--dgray);}
+.dl-info strong{color:var(--navy);}
+.dl-btns{display:flex;gap:10px;flex-wrap:wrap;}
+.btn-dl{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s,transform .1s;}
+.btn-dl:hover{opacity:.88;transform:translateY(-1px);}
+.btn-excel{background:var(--green);color:#fff;}
+.btn-csv{background:var(--blue);color:#fff;}
+
+/* FOOTER */
+.emi-footer{background:var(--navy);border-radius:8px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.emi-footer-brand{font-size:14px;font-weight:800;color:var(--gold);}
+.emi-footer-tag{font-size:11px;color:#aab;}
+.emi-footer-right{font-size:10px;color:#778;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div>
+      <div class="topbar-logo">EMI CostTrack™</div>
+      <div class="topbar-sub">Abandonment AFE Performance Dashboard</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="well-badge" id="topBadge">📍 Program Rollup — 38 Wells</div>
+    <div class="status-live"><div class="pulse"></div>LIVE</div>
+    <div class="topbar-date" id="liveDate"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- WELL SELECTOR -->
+  <div class="well-selector-wrap">
+    <span class="sel-label">Select Well / View:</span>
+    <select class="well-select" id="wellSelect" onchange="onSelectChange()">
+      <option value="ALL">📊 ALL WELLS — Program Rollup (38 Wells)</option>
+    </select>
+  </div>
+
+  <!-- WELL INFO BAR -->
+  <div class="well-info" id="wellInfoBar"></div>
+
+  <!-- AER COMPLIANCE -->
+  <div class="compliance-bar">
+    <div class="comp-title" id="compTitle">🛡 AER Regulatory &amp; Environmental Compliance</div>
+    <div class="comp-items" id="compItems"></div>
+  </div>
+
+  <!-- PHASE TRACKER (hidden on rollup) -->
+  <div id="phaseSection" style="display:none;">
+    <div class="section-label">Abandonment Phase Progress</div>
+    <div class="phase-track" id="phaseTrack"></div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="section-label" id="statLabel">Key Cost Metrics — Program Rollup</div>
+  <div class="stat-grid" id="statGrid"></div>
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title" id="curveTitle">Cumulative Spend vs. AFE Program Curve</div>
+      <div class="chart-sub" id="curveSub">Daily actual spend vs. programmed AFE spend curve</div>
+      <canvas id="spendCurveChart" height="220"></canvas>
+      <div class="curve-legend">
+        <div class="cl-item"><div class="cl-line" style="background:var(--blue);"></div>Actual Spend</div>
+        <div class="cl-item"><div class="cl-dash" style="border-color:#ccc;"></div>AFE Program</div>
+        <div class="cl-item"><div class="cl-line" style="background:rgba(201,168,76,0.7);border:1px dashed var(--gold);"></div>Forecast</div>
+      </div>
+      <div class="mini-metric" id="miniMetrics"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Spend by Service Category</div>
+      <div class="chart-sub" id="donutSub">Actual spend to date</div>
+      <canvas id="donutChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- AFE LINE ITEM TABLE -->
+  <div class="table-card">
+    <div class="table-header-row">
+      <div>
+        <div class="chart-title" id="afeTableTitle">AFE Line Item Performance</div>
+        <div class="chart-sub">Actual spend vs. AFE budget by cost category. Forecast = projected final cost based on current run rate.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="status-pill" style="background:var(--ltgrn);color:var(--green);">✓ On Budget</span>
+        <span class="status-pill" style="background:var(--ltamb);color:var(--amber);">⚠ Watch</span>
+        <span class="status-pill" style="background:var(--ltred);color:var(--red);">▲ Over AFE</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;min-width:200px;">Cost Category</th>
+          <th style="text-align:left;">Supplier</th>
+          <th>AFE Budget</th>
+          <th>Actual to Date</th>
+          <th>Committed</th>
+          <th>Forecast Final</th>
+          <th>Variance $</th>
+          <th style="min-width:160px;">Budget Used</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="afeTableBody"></tbody>
+      <tfoot id="afeTableFoot"></tfoot>
+    </table>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-row">
+    <div class="chart-card">
+      <div class="section-label">Active Alerts &amp; Flags</div>
+      <div id="alertsContainer"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title" id="dailyTitle">Daily Spend vs. AFE Daily Budget</div>
+      <div class="chart-sub" id="dailySub">Actual daily cost vs. programmed daily AFE spend</div>
+      <canvas id="dailySpendChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- INVOICE TABLE -->
+  <div class="table-card">
+    <div class="table-header-row">
+      <div>
+        <div class="chart-title" id="invTitle">Invoice &amp; Ticket Pipeline</div>
+        <div class="chart-sub">All service company field tickets and invoices in the approval and payment workflow</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;">Service Company</th>
+          <th style="text-align:left;">Service / Description</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Ticket Status</th>
+          <th>Invoice Status</th>
+          <th>Est. Days to Payment</th>
+        </tr>
+      </thead>
+      <tbody id="invoiceBody"></tbody>
+    </table>
+  </div>
+
+  <!-- DOWNLOAD BAR -->
+  <div class="dl-bar">
+    <div class="dl-info">📥 Export: <strong id="dlLabel">Program Rollup — All 38 Wells</strong></div>
+    <div class="dl-btns">
+      <button class="btn-dl btn-excel" onclick="downloadExcel()">⬇ Download Excel (.xlsx)</button>
+      <button class="btn-dl btn-csv" onclick="downloadCSV()">⬇ Download CSV</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="emi-footer">
+    <div>
+      <div class="emi-footer-brand">EMI CostTrack™</div>
+      <div class="emi-footer-tag">Abandonment AFE Dashboard powered by Enter My Invoice (EMI)</div>
+    </div>
+    <div class="emi-footer-right">Data updates in real time as field tickets are approved &nbsp;|&nbsp; entermyinvoice.com</div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// MASTER DATA
+// ═══════════════════════════════════════════════════════════════
+
+const SUPPLIERS = {
+  eng:'Rewild', svcRig:'Bear Well Servicing', wireline:'Voltage Wireline',
+  ct:'Titanium Energy Services', milling:'Innovative Well Abandonment',
+  cement:'Performance Service', scvf:'Highwood Environmental',
+  emissions:'Capstone', gmra:'Rewild', supervisor:'Rewind',
+  pressure:'Canadian Pressure Testing Technologies', cutcap:'Innovative Well Abandonment',
+};
+
+const CAT_DEFS = [
+  { key:'eng',       label:'Abandonment Procedures / Eng. Design', pct:0.048 },
+  { key:'svcRig',    label:'Service Rig Programs',                 pct:0.220 },
+  { key:'wireline',  label:'Wireline Programs',                    pct:0.068 },
+  { key:'ct',        label:'Coiled Tubing Programs',               pct:0.110 },
+  { key:'milling',   label:'Milling & Cleanout',                   pct:0.050 },
+  { key:'cement',    label:'Cementing Programs',                   pct:0.148 },
+  { key:'scvf',      label:'SCVF & Gas Migration Remediation',     pct:0.072 },
+  { key:'emissions', label:'Emissions Monitoring',                 pct:0.042 },
+  { key:'gmra',      label:'Gas Migration Risk Assessment',        pct:0.028 },
+  { key:'supervisor',label:'Site Supervisor',                      pct:0.062 },
+  { key:'pressure',  label:'Pressure Testing',                     pct:0.038 },
+  { key:'cutcap',    label:'Cut & Cap',                            pct:0.032 },
+  { key:'contingency',label:'Contingency',                         pct:0.080 },
+];
+
+const PHASES = ['Not Started','Mob & Site Prep','SCVF/GM Survey','Wireline & Milling','Coiled Tubing','Cementing','Pressure Testing','Emissions Mon.','Demob & Filing','Complete'];
+
+// Seeded deterministic RNG (no two wells the same)
+function H(s,o=0){let h=o+1;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i);return h>>>0;}
+function R(seed,lo,hi){let x=Math.sin(seed+1)*93176.4837;x=x-Math.floor(x);return lo+x*(hi-lo);}
+function RI(seed,lo,hi){return Math.round(R(seed,lo,hi));}
+
+// Individual well AFE data — ~$50K ±10%, each unique
+const WELL_AFES = {
+  '00/02-09-040-02W5/00': 51200,
+  '00/01-10-040-04W5/00': 48700,
+  '00/10-10-040-04W5/02': 52400,
+  '00/10-10-040-04W5/03': 47300,
+  '00/10-34-039-03W5/00': 53100,
+  '02/04-01-040-04W5/00': 49600,
+  '00/05-01-040-04W5/02': 46800,
+  '02/14-05-040-03W5/00': 54200,
+  '00/06-26-038-03W5/00': 50800,
+  '00/12-35-038-03W5/00': 45900,
+  '00/06-08-038-02W5/00': 51700,
+  '00/12-14-038-03W5/00': 48300,
+  '02/14-14-038-03W5/00': 53800,
+  '00/12-14-038-03W5/02': 47600,
+  '00/16-16-038-03W5/00': 50100,
+  '00/14-23-038-03W5/00': 52700,
+  '02/08-06-039-03W5/00': 46400,
+  '02/06-13-039-04W5/00': 55000,
+  '02/06-13-039-04W5/02': 49200,
+  '03/14-18-039-03W5/02': 51900,
+  '00/10-30-039-03W5/00': 47100,
+  '03/14-18-039-03W5/00': 53500,
+  '00/05-25-039-04W5/00': 48900,
+  '00/03-20-038-03W5/00': 45400,
+  '00/14-20-038-03W5/00': 52100,
+  '03/16-20-038-03W5/00': 50600,
+  '00/06-25-038-04W5/00': 54700,
+  '02/02-25-038-04W5/00': 47800,
+  '02/14-29-038-03W5/00': 51400,
+  '02/02-25-038-04W5/02': 49900,
+  '00/08-31-038-03W5/00': 46100,
+  '00/08-31-038-03W5/02': 53300,
+  '03/03-18-038-03W5/00': 50400,
+  '03/03-18-038-03W5/02': 48100,
+  '02/03-20-038-03W5/00': 52900,
+  '00/11-15-038-04W5/02': 45700,
+  '00/07-23-039-04W5/00': 54500,
+  '00/11-15-038-04W5/00': 51100,
+};
+
+const UWIS = Object.keys(WELL_AFES);
+
+// Program days per well — varies so wells are at different stages
+const PROG_DAYS = {
+  '00/02-09-040-02W5/00':18, '00/01-10-040-04W5/00':14, '00/10-10-040-04W5/02':11,
+  '00/10-10-040-04W5/03':7,  '00/10-34-039-03W5/00':18, '02/04-01-040-04W5/00':15,
+  '00/05-01-040-04W5/02':9,  '02/14-05-040-03W5/00':18, '00/06-26-038-03W5/00':12,
+  '00/12-35-038-03W5/00':5,  '00/06-08-038-02W5/00':18, '00/12-14-038-03W5/00':16,
+  '02/14-14-038-03W5/00':8,  '00/12-14-038-03W5/02':18, '00/16-16-038-03W5/00':13,
+  '00/14-23-038-03W5/00':18, '02/08-06-039-03W5/00':3,  '02/06-13-039-04W5/00':18,
+  '02/06-13-039-04W5/02':10, '03/14-18-039-03W5/02':6,  '00/10-30-039-03W5/00':18,
+  '03/14-18-039-03W5/00':17, '00/05-25-039-04W5/00':4,  '00/03-20-038-03W5/00':18,
+  '00/14-20-038-03W5/00':2,  '03/16-20-038-03W5/00':18, '00/06-25-038-04W5/00':15,
+  '02/02-25-038-04W5/00':11, '02/14-29-038-03W5/00':8,  '02/02-25-038-04W5/02':18,
+  '00/08-31-038-03W5/00':14, '00/08-31-038-03W5/02':7,  '03/03-18-038-03W5/00':18,
+  '03/03-18-038-03W5/02':12, '02/03-20-038-03W5/00':9,  '00/11-15-038-04W5/02':18,
+  '00/07-23-039-04W5/00':16, '00/11-15-038-04W5/00':5,
+};
+
+function getPhase(day){
+  if(day===0) return 'Not Started';
+  if(day<=2)  return 'Mob & Site Prep';
+  if(day<=3)  return 'SCVF/GM Survey';
+  if(day<=7)  return 'Wireline & Milling';
+  if(day<=10) return 'Coiled Tubing';
+  if(day<=13) return 'Cementing';
+  if(day<=15) return 'Pressure Testing';
+  if(day<=16) return 'Emissions Mon.';
+  if(day<=17) return 'Demob & Filing';
+  return 'Complete';
+}
+
+// Build per-well cost data
+function buildWellCats(uwi){
+  const afe = WELL_AFES[uwi];
+  const day = PROG_DAYS[uwi];
+  const prog = day / 18;
+  const h0 = H(uwi, 0);
+
+  return CAT_DEFS.map((cat, i) => {
+    const ns = H(uwi, i * 17 + 100);
+    // Unique AFE per category — base pct with small per-well jitter
+    const catAFE = Math.round(afe * cat.pct * (0.93 + R(ns, 0, 0.14)));
+
+    let actual = 0, committed = 0, forecast = catAFE;
+
+    if (prog > 0) {
+      // Each category has its own earn curve — some front-loaded (svcRig, wireline), some back (cement, pressure)
+      const earnMap = {eng:0.9,svcRig:0.85,wireline:0.75,ct:0.65,milling:0.60,cement:0.55,scvf:0.40,emissions:0.30,gmra:0.95,supervisor:0.85,pressure:0.25,cutcap:0.50,contingency:0.0};
+      const maxEarn = earnMap[cat.key] ?? 0.7;
+      const earnFrac = Math.min(1, prog / (maxEarn + 0.01));
+      const earnNoise = R(ns + 1, 0.88, 1.08);
+      actual = day >= 18 ? Math.round(catAFE * (0.88 + R(ns+2,0,0.14))) : Math.round(catAFE * earnFrac * earnNoise);
+      actual = Math.min(actual, catAFE * 1.18);
+      committed = Math.min(Math.round(actual * (1.03 + R(ns+3,0,0.1))), catAFE * 1.05);
+    }
+
+    // Forecast — occasional overrun
+    const overChance = R(ns+4, 0, 1);
+    if (cat.key === 'contingency') {
+      forecast = catAFE; actual = 0; committed = 0;
+    } else if (day >= 18) {
+      forecast = actual;
+    } else if (overChance > 0.84) {
+      forecast = Math.round(catAFE * (1.04 + R(ns+5, 0, 0.09)));
+    } else {
+      forecast = Math.round(catAFE * (0.91 + R(ns+6, 0, 0.10)));
+    }
+
+    return {
+      ...cat,
+      supplier: SUPPLIERS[cat.key] || '—',
+      afe: catAFE,
+      actual: Math.round(actual),
+      committed: Math.round(committed),
+      forecast: Math.round(forecast),
+    };
+  });
+}
+
+// Memoised well data
+const wellCache = {};
+function getWell(uwi) {
+  if (!wellCache[uwi]) {
+    const day = PROG_DAYS[uwi];
+    const cats = buildWellCats(uwi);
+    wellCache[uwi] = {
+      uwi,
+      afe: WELL_AFES[uwi],
+      day,
+      phase: getPhase(day),
+      cats,
+      totalActual:   cats.reduce((a,c)=>a+c.actual,   0),
+      totalCommitted:cats.reduce((a,c)=>a+c.committed, 0),
+      totalForecast: cats.reduce((a,c)=>a+c.forecast,  0),
+    };
+  }
+  return wellCache[uwi];
+}
+
+// Rollup
+function getRollup() {
+  const wells = UWIS.map(getWell);
+  const cats = CAT_DEFS.map((cat,i) => ({
+    ...cat,
+    supplier: SUPPLIERS[cat.key] || '—',
+    afe:       wells.reduce((a,w)=>a+w.cats[i].afe,       0),
+    actual:    wells.reduce((a,w)=>a+w.cats[i].actual,     0),
+    committed: wells.reduce((a,w)=>a+w.cats[i].committed,  0),
+    forecast:  wells.reduce((a,w)=>a+w.cats[i].forecast,   0),
+  }));
+  return {
+    uwi:'ALL', afe:wells.reduce((a,w)=>a+w.afe,0),
+    day:null, phase:'Program Active', cats,
+    totalActual:   cats.reduce((a,c)=>a+c.actual,   0),
+    totalCommitted:cats.reduce((a,c)=>a+c.committed, 0),
+    totalForecast: cats.reduce((a,c)=>a+c.forecast,  0),
+    wells,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BUILD DROPDOWN
+// ═══════════════════════════════════════════════════════════════
+const sel = document.getElementById('wellSelect');
+UWIS.forEach(uwi => {
+  const w = getWell(uwi);
+  const o = document.createElement('option');
+  o.value = uwi;
+  o.textContent = `${uwi}  |  AFE $${w.afe.toLocaleString()}`;
+  sel.appendChild(o);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CHART REFS
+// ═══════════════════════════════════════════════════════════════
+let chartCurve=null, chartDonut=null, chartDaily=null;
+
+// ═══════════════════════════════════════════════════════════════
+// FORMAT HELPERS
+// ═══════════════════════════════════════════════════════════════
+function fmt(n){return '$'+(n/1000).toFixed(1)+'K';}
+function fmtM(n){return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+'K';}
+function fmtFull(n){return '$'+Math.round(n).toLocaleString();}
+function fmtPct(a,b){return b?((a/b)*100).toFixed(1)+'%':'0%';}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════════════
+function onSelectChange(){
+  const v = sel.value;
+  render(v==='ALL' ? getRollup() : getWell(v));
+}
+
+function render(data){
+  const isAll = data.uwi === 'ALL';
+
+  // Top badge
+  document.getElementById('topBadge').textContent = isAll
+    ? '📍 Program Rollup — 38 Wells'
+    : '🏚 '+data.uwi;
+
+  // Download label
+  document.getElementById('dlLabel').textContent = isAll
+    ? 'Program Rollup — All 38 Wells'
+    : data.uwi;
+
+  renderInfoBar(data, isAll);
+  renderCompliance(data, isAll);
+  renderPhaseTracker(data, isAll);
+  renderStatCards(data, isAll);
+  renderCharts(data, isAll);
+  renderAFETable(data, isAll);
+  renderAlerts(data, isAll);
+  renderInvoices(data, isAll);
+}
+
+// ── WELL INFO BAR ──────────────────────────────────────────────
+function renderInfoBar(data, isAll){
+  const el = document.getElementById('wellInfoBar');
+  if(isAll){
+    const complete = data.wells.filter(w=>w.phase==='Complete').length;
+    el.innerHTML = wi('Operator','Whitecap Resources Inc.')+div()+
+      wi('Engineering Firm','Rewild')+div()+
+      wi('Program Wells','38 Wells')+div()+
+      wi('Program Start','April 28, 2025')+div()+
+      wi('Est. Completion','Oct 31, 2025','var(--blue)')+div()+
+      wi('Wells Complete',`${complete} / 38`)+div()+
+      wi('AER Filings Filed',`${complete} Submitted`)+div()+
+      wi('Program Status','⚙ Active','var(--gold)');
+  } else {
+    const complete = UWIS.map(getWell).filter(w=>w.phase==='Complete').length;
+    el.innerHTML = wi('Operator','Whitecap Resources Inc.')+div()+
+      wi('Engineering Firm','Rewild')+div()+
+      wi('Service Rig','Bear Well Servicing')+div()+
+      wi('Mob Date','April 28, 2025')+div()+
+      wi('Program Day',`Day ${data.day} of 18 (Est.)`,'var(--blue)')+div()+
+      wi('AFE Budget',fmtFull(data.afe))+div()+
+      wi('Current Phase',data.phase,'var(--gold)')+div()+
+      wi('AER Status',data.day>=18?'✅ Filed':'⏳ In Progress');
+  }
+}
+function wi(label,value,color=''){return `<div class="wi-item"><span class="wi-label">${label}</span><span class="wi-value"${color?` style="color:${color};"`:''} >${value}</span></div>`;}
+function div(){return '<div class="wi-divider"></div>';}
+
+// ── AER COMPLIANCE ─────────────────────────────────────────────
+function renderCompliance(data, isAll){
+  if(isAll){
+    const wells = data.wells;
+    const complete = wells.filter(w=>w.phase==='Complete').length;
+    const inProg = wells.filter(w=>w.phase!=='Complete'&&w.phase!=='Not Started').length;
+    document.getElementById('compTitle').textContent = '🛡 AER Regulatory & Environmental Compliance — Program Status';
+    document.getElementById('compItems').innerHTML =
+      cp('pass',`AER Orders Filed (${complete+inProg}/38)`)+
+      cp('pass',`SCVF Surveys Complete (${complete+inProg}/38)`)+
+      cp('pass',`GM Risk Assessments (${complete}/38 Final)`)+
+      cp('pend',`Post-Cement Pressure Tests (${Math.round(complete*0.85)}/38)`)+
+      cp('pend',`Post-Abdn Emissions Reports (${complete}/38 Submitted)`)+
+      cp('due', `AER Final Well Status (${complete}/38 Filed)`);
+  } else {
+    const d = data.day;
+    document.getElementById('compTitle').textContent = `🛡 AER Regulatory & Environmental Compliance — ${data.uwi}`;
+    document.getElementById('compItems').innerHTML =
+      cp(d>=1?'pass':'pend','AER Abandonment Order Filed')+
+      cp(d>=3?'pass':'pend','SCVF Baseline Survey')+
+      cp(d>=3?'pass':'pend','Gas Migration Risk Assessment (Rewild)')+
+      cp(d>=13?'pass':'pend','Primary Cement Job Complete')+
+      cp(d>=15?'pass':d>=14?'due':'pend','Post-Cement Pressure Test')+
+      cp(d>=16?'pass':d>=15?'due':'pend','Post-Abdn Emissions Report (Capstone)')+
+      cp(d>=18?'pass':'pend','AER Final Well Status Filed');
+  }
+}
+function cp(type,text){
+  const cls = type==='pass'?'cp-pass':type==='due'?'cp-due':'cp-pend';
+  const bg = type==='pass'?'var(--green)':type==='due'?'var(--red)':'var(--amber)';
+  return `<div class="comp-pill ${cls}"><div class="cp-dot" style="background:${bg};"></div>${text}</div>`;
+}
+
+// ── PHASE TRACKER ──────────────────────────────────────────────
+function renderPhaseTracker(data, isAll){
+  const sec = document.getElementById('phaseSection');
+  if(isAll){sec.style.display='none';return;}
+  sec.style.display='block';
+  const defs=[
+    {l:'Mob & Site Prep',d:'Days 1–2',end:2},
+    {l:'SCVF/GM Survey',d:'Days 2–3',end:3},
+    {l:'Wireline & Milling',d:'Days 4–7',end:7},
+    {l:'Coiled Tubing',d:'Days 8–10',end:10},
+    {l:'Cementing',d:'Days 11–13',end:13},
+    {l:'Pressure Testing',d:'Days 14–15',end:15},
+    {l:'Emissions Mon.',d:'Day 16',end:16},
+    {l:'Demob & Filing',d:'Days 17–18',end:18},
+  ];
+  const track = document.getElementById('phaseTrack');
+  track.innerHTML = '';
+  defs.forEach((p,i)=>{
+    const start = i===0?1:(defs[i-1].end+1);
+    const cls = data.day>=p.end?'phase-complete':data.day>=start?'phase-active':'phase-pending';
+    const suf = cls==='phase-complete'?' ✓':cls==='phase-active'?' ← NOW':'';
+    track.innerHTML += `<div class="phase-seg ${cls}">${p.l}<span class="phase-days">${p.d}${suf}</span></div>`;
+    if(i<defs.length-1) track.innerHTML += '<div class="phase-spacer"></div>';
+  });
+}
+
+// ── STAT CARDS ─────────────────────────────────────────────────
+function renderStatCards(data, isAll){
+  const g = document.getElementById('statGrid');
+  const {afe,totalActual,totalCommitted,totalForecast} = data;
+  const vr = totalForecast - afe;
+  const pctUsed = afe ? (totalActual/afe*100) : 0;
+  const complete = isAll ? data.wells.filter(w=>w.phase==='Complete').length : null;
+
+  document.getElementById('statLabel').textContent = isAll
+    ? `Key Cost Metrics — Program Rollup (38 Wells)`
+    : `Key Cost Metrics — ${data.uwi} — Day ${data.day}`;
+
+  let card5 = isAll
+    ? `<div class="stat-card" style="border-color:var(--navy);">
+        <div class="sc-label">Wells Complete</div>
+        <div class="sc-value">${complete} / 38</div>
+        <div class="sc-sub">AER filings submitted</div>
+        <div class="sc-badge" style="background:var(--ltblue);color:var(--blue);">${38-complete} remaining</div>
+       </div>`
+    : `<div class="stat-card" style="border-color:var(--navy);">
+        <div class="sc-label">AFE Remaining</div>
+        <div class="sc-value">${fmt(afe - totalActual)}</div>
+        <div class="sc-sub">Days ${data.day}–18 to complete</div>
+        <div class="sc-badge" style="background:var(--ltblue);color:var(--blue);">${18-data.day} days remaining</div>
+       </div>`;
+
+  g.innerHTML = `
+    <div class="stat-card" style="border-color:var(--blue);">
+      <div class="sc-label">Total AFE Budget</div>
+      <div class="sc-value">${fmtM(afe)}</div>
+      <div class="sc-sub">${isAll?'38 wells × ~$50K avg':'Approved program AFE'}</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--green);">
+      <div class="sc-label">Actual Spend to Date</div>
+      <div class="sc-value" style="color:var(--green);">${fmtM(totalActual)}</div>
+      <div class="sc-sub">${pctUsed.toFixed(1)}% of AFE used</div>
+      <div class="sc-badge" style="background:var(--ltgrn);color:var(--green);">✓ On Track</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--gold);">
+      <div class="sc-label">Committed (Approved Tickets)</div>
+      <div class="sc-value" style="color:var(--amber);">${fmtM(totalCommitted)}</div>
+      <div class="sc-sub">Incl. approved not yet invoiced</div>
+      <div class="sc-badge" style="background:var(--ltamb);color:var(--amber);">${fmtPct(totalCommitted,afe)} of AFE</div>
+    </div>
+    <div class="stat-card" style="border-color:${vr>0?'var(--red)':'var(--green)'};">
+      <div class="sc-label">Forecast Final Cost</div>
+      <div class="sc-value" style="color:${vr>0?'var(--red)':'var(--green)'};">${fmtM(totalForecast)}</div>
+      <div class="sc-sub">${vr>=0?'+':''}${fmtM(vr)} vs. AFE</div>
+      <div class="sc-badge" style="background:${vr>0?'var(--ltred)':'var(--ltgrn)'};color:${vr>0?'var(--red)':'var(--green)'};">${vr>=0?'▲':'▼'} ${Math.abs(vr/afe*100).toFixed(1)}% Variance</div>
+    </div>
+    ${card5}`;
+}
+
+// ── CHARTS ─────────────────────────────────────────────────────
+function renderCharts(data, isAll){
+  renderSpendCurve(data, isAll);
+  renderDonut(data);
+  renderDaily(data, isAll);
+}
+
+function renderSpendCurve(data, isAll){
+  const totalDays = isAll ? 38 : 18; // rollup uses wells as x-axis
+  const afe = data.afe;
+
+  if(isAll){
+    // X-axis = well number, sorted by day completed
+    const sorted = [...data.wells].sort((a,b)=>a.day-b.day);
+    const labels = sorted.map((_,i)=>`W${i+1}`);
+    const afeVals = sorted.map(w=>w.afe);
+    const actVals = sorted.map(w=>w.totalActual);
+    const fctVals = sorted.map(w=>w.totalForecast);
+
+    document.getElementById('curveTitle').textContent = 'AFE vs. Actual vs. Forecast — All 38 Wells';
+    document.getElementById('curveSub').textContent = 'Per-well AFE budget vs. actual spend vs. forecast final cost';
+
+    if(chartCurve) chartCurve.destroy();
+    chartCurve = new Chart(document.getElementById('spendCurveChart').getContext('2d'),{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'AFE Budget',data:afeVals,backgroundColor:'rgba(26,58,92,0.25)',borderColor:'#1A3A5C',borderWidth:1,borderRadius:2},
+        {label:'Actual Spend',data:actVals,backgroundColor:actVals.map((v,i)=>v>afeVals[i]?'rgba(192,57,43,0.65)':'rgba(46,117,182,0.72)'),borderRadius:3},
+        {label:'Forecast',data:fctVals,type:'line',borderColor:'rgba(201,168,76,0.85)',borderDash:[4,3],borderWidth:2,pointRadius:2,pointBackgroundColor:'rgba(201,168,76,0.85)',fill:false},
+      ]},
+      options:{responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}}},
+        scales:{
+          x:{ticks:{font:{size:8},color:'#888',maxRotation:0},grid:{display:false}},
+          y:{ticks:{font:{size:9},color:'#888',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#eee'}}
+        },
+        interaction:{mode:'index',intersect:false}}
+    });
+
+    document.getElementById('miniMetrics').innerHTML = `
+      <div class="mm-card"><div class="mm-val">${data.wells.filter(w=>w.phase==='Complete').length}</div><div class="mm-lbl">Wells Complete</div><div class="mm-vs" style="color:#888;">of 38</div></div>
+      <div class="mm-card"><div class="mm-val">${fmtM(afe/38)}</div><div class="mm-lbl">Avg AFE / Well</div></div>
+      <div class="mm-card"><div class="mm-val">${data.wells.filter(w=>w.totalForecast>w.afe).length}</div><div class="mm-lbl">Wells Over AFE</div><div class="mm-vs" style="color:var(--amber);">trending over</div></div>
+      <div class="mm-card"><div class="mm-val">${fmtPct(data.totalActual,afe)}</div><div class="mm-lbl">Program % Used</div></div>`;
+
+  } else {
+    const day = data.day;
+    const pcts=[.06,.12,.08,.09,.09,.08,.07,.07,.06,.07,.08,.05,.05,.03,.03,.03,.02,.01];
+    let cum=0; const afeCurve=pcts.map(p=>{cum+=p;return Math.round(afe*cum);});
+    const db = afe/18;
+    const actualDaily = Array.from({length:day},(_,i)=>Math.round(db*(0.72+R(H(data.uwi,i*3+300),0,0.56))));
+    const actCum = actualDaily.map((_,i)=>actualDaily.slice(0,i+1).reduce((a,b)=>a+b,0));
+    const base = actCum[actCum.length-1]||0;
+    const rem = data.totalForecast - base;
+    const allDays = Array.from({length:18},(_,i)=>i+1);
+    const actData = allDays.map((_,i)=>i<day?actCum[i]:null);
+    const fctData = allDays.map((_,i)=>{
+      if(i<day-1)return null;
+      if(i===day-1)return actCum[day-1]||0;
+      return Math.round(base+rem*((i-day+1)/(18-day+1)));
+    });
+
+    document.getElementById('curveTitle').textContent = `Cumulative Spend vs. AFE Program Curve — ${data.uwi}`;
+    document.getElementById('curveSub').textContent = `Daily actual spend (blue) vs. programmed AFE curve (dashed) — Days 1 to 18`;
+
+    if(chartCurve) chartCurve.destroy();
+    chartCurve = new Chart(document.getElementById('spendCurveChart').getContext('2d'),{
+      type:'line',
+      data:{labels:allDays.map(d=>'Day '+d),datasets:[
+        {label:'AFE Program',data:afeCurve,borderColor:'#CCCCCC',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false,tension:0.4},
+        {label:'Actual Spend',data:actData,borderColor:'#2E75B6',borderWidth:2.5,pointRadius:0,fill:{target:'origin',above:'rgba(46,117,182,0.06)'},tension:0.3},
+        {label:'Forecast',data:fctData,borderColor:'rgba(201,168,76,0.8)',borderDash:[4,3],borderWidth:2,pointRadius:0,fill:false,tension:0.3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{font:{size:9},maxTicksLimit:18,color:'#888'},grid:{color:'#eee'}},
+                y:{ticks:{font:{size:9},color:'#888',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#eee'}}},
+        interaction:{mode:'index',intersect:false}}
+    });
+
+    document.getElementById('miniMetrics').innerHTML = `
+      <div class="mm-card"><div class="mm-val">${fmtPct(data.totalActual,afe)}</div><div class="mm-lbl">AFE Used</div><div class="mm-vs" style="color:#888;">Day ${day}/18</div></div>
+      <div class="mm-card"><div class="mm-val">${fmt(Math.round(data.totalActual/Math.max(1,day)))}</div><div class="mm-lbl">Avg Daily Spend</div><div class="mm-vs" style="color:var(--green);">vs. ${fmt(Math.round(afe/18))} AFE</div></div>
+      <div class="mm-card"><div class="mm-val">${data.cats.filter(c=>c.key!=='contingency'&&c.actual>0).length}</div><div class="mm-lbl">Active Services</div></div>
+      <div class="mm-card"><div class="mm-val">${data.cats.filter(c=>c.forecast>c.afe&&c.key!=='contingency').length}</div><div class="mm-lbl">Categories Over</div><div class="mm-vs" style="color:var(--amber);">vs. AFE</div></div>`;
+  }
+
+  document.getElementById('donutSub').textContent = isAll
+    ? `Total actual spend — ${fmtFull(data.totalActual)} across all 38 wells`
+    : `Actual spend to date — ${fmtFull(data.totalActual)} total`;
+}
+
+function renderDonut(data){
+  const cats = data.cats.filter(c=>c.key!=='contingency'&&c.actual>0);
+  const colors=['#1A3A5C','#2E75B6','#C9A84C','#1A7A3C','#1A6B6B','#D4811A','#5C3A1A','#6B2E99','#2E8B8B','#C0392B','#3A7CA5','#888888'];
+  if(chartDonut) chartDonut.destroy();
+  chartDonut = new Chart(document.getElementById('donutChart').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:cats.map(c=>c.label),datasets:[{data:cats.map(c=>c.actual),backgroundColor:colors.slice(0,cats.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'58%',
+      plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:10,padding:6}},
+               tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' ('+((c.raw/data.totalActual)*100).toFixed(1)+'%)'}}}}
+  });
+}
+
+function renderDaily(data, isAll){
+  let labels, actVals, afeVals;
+  if(isAll){
+    // Bar per well
+    labels = data.wells.map((_,i)=>`W${i+1}`);
+    actVals = data.wells.map(w=>w.totalActual);
+    afeVals = data.wells.map(w=>w.afe);
+    document.getElementById('dailyTitle').textContent = 'Actual Spend vs. AFE Budget — All 38 Wells';
+    document.getElementById('dailySub').textContent = 'Per-well actual spend (coloured by status) vs. AFE budget line';
+  } else {
+    const db = data.afe/18;
+    actVals = Array.from({length:data.day},(_,i)=>Math.round(db*(0.72+R(H(data.uwi,i*3+300),0,0.56))));
+    afeVals = Array(data.day).fill(Math.round(db));
+    labels = Array.from({length:data.day},(_,i)=>'Day '+(i+1));
+    document.getElementById('dailyTitle').textContent = 'Daily Spend vs. AFE Daily Budget';
+    document.getElementById('dailySub').textContent = `Last ${data.day} days — actual daily cost vs. programmed daily AFE`;
+  }
+  if(chartDaily) chartDaily.destroy();
+  chartDaily = new Chart(document.getElementById('dailySpendChart').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Actual',data:actVals,backgroundColor:actVals.map((v,i)=>v>afeVals[i]?'rgba(192,57,43,0.75)':'rgba(46,117,182,0.75)'),borderRadius:3},
+      {label:'AFE Budget',data:afeVals,type:'line',borderColor:'#C9A84C',borderDash:[4,3],borderWidth:2,pointRadius:0,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}}},
+      scales:{x:{ticks:{font:{size:isAll?7:9},color:'#888',maxRotation:isAll?0:0},grid:{display:false}},
+              y:{ticks:{font:{size:9},color:'#888',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#eee'}}}}
+  });
+}
+
+// ── AFE TABLE ──────────────────────────────────────────────────
+function renderAFETable(data, isAll){
+  document.getElementById('afeTableTitle').textContent = isAll
+    ? `AFE Line Item Performance — Program Rollup — All 38 Wells`
+    : `AFE Line Item Performance — ${data.uwi} — Day ${data.day} of 18`;
+
+  const tbody = document.getElementById('afeTableBody');
+  const tfoot = document.getElementById('afeTableFoot');
+  tbody.innerHTML=''; tfoot.innerHTML='';
+  let tA=0,tAc=0,tC=0,tF=0;
+
+  data.cats.forEach(row=>{
+    tA+=row.afe; tAc+=row.actual; tC+=row.committed; tF+=row.forecast;
+    const v = row.forecast-row.afe;
+    const p = row.afe>0?(row.actual/row.afe*100):0;
+    const ov=v>0; const wa=!ov&&p>78;
+    const st=ov?'▲ Over AFE':wa?'⚠ Watch':'✓ On Budget';
+    const sc=ov?'#C0392B':wa?'#D4811A':'#1A7A3C';
+    const sb=ov?'#FDECEA':wa?'#FEF3E2':'#E6F4EC';
+    const bc=ov?'#C0392B':wa?'#D4811A':'#1A7A3C';
+    const tr = document.createElement('tr');
+    tr.innerHTML=`<td>${row.label}</td>
+      <td style="text-align:left;color:#555;font-size:11px;font-weight:400;">${row.supplier}</td>
+      <td>${fmt(row.afe)}</td><td>${fmt(row.actual)}</td><td>${fmt(row.committed)}</td>
+      <td style="color:${ov?'#C0392B':'inherit'};font-weight:${ov?700:400};">${fmt(row.forecast)}</td>
+      <td style="color:${ov?'#C0392B':'#1A7A3C'};font-weight:700;">${v>=0?'+':''}${fmt(v)}</td>
+      <td><div class="vbar-wrap"><div class="vbar-bg"><div class="vbar-fill" style="width:${Math.min(p,100)}%;background:${bc};"></div></div><span class="vpct" style="color:${bc};">${p.toFixed(0)}%</span></div></td>
+      <td><span class="status-pill" style="background:${sb};color:${sc};">${st}</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  const vt=tF-tA;
+  tfoot.innerHTML=`<tr>
+    <td>TOTAL ABANDONMENT COST</td><td></td>
+    <td>${fmt(tA)}</td><td>${fmt(tAc)}</td><td>${fmt(tC)}</td><td>${fmt(tF)}</td>
+    <td style="color:${vt>0?'#F4A26A':'#4AE080'};">${vt>=0?'+':''}${fmt(vt)}</td>
+    <td colspan="2">${(tAc/tA*100).toFixed(1)}% of AFE used${isAll?'' :' — Day '+data.day+' of 18'}</td>
+  </tr>`;
+}
+
+// ── ALERTS ────────────────────────────────────────────────────
+function renderAlerts(data, isAll){
+  const c = document.getElementById('alertsContainer');
+  c.innerHTML = '';
+
+  if(isAll){
+    const over = data.wells.filter(w=>w.totalForecast>w.afe);
+    const pend = data.wells.filter(w=>w.phase!=='Complete'&&w.phase!=='Not Started');
+    c.innerHTML += alertItem('red',`${over.length} Wells Trending Over AFE`,`Wells including ${over.slice(0,3).map(w=>w.uwi.slice(3,14)).join(', ')} are forecasting over budget. Total overrun: ${fmtFull(over.reduce((a,w)=>a+(w.totalForecast-w.afe),0))}. Review with Rewild engineering.`);
+    c.innerHTML += alertItem('amber',`${pend.length} Wells In Progress — Open Field Tickets`,`${pend.length} wells actively progressing. EMI digital ticket submission queue active across Bear Well Servicing, Voltage Wireline, Performance Service. Delays in sign-off by Rewind Site Supervisors impact ESCO payment timelines.`);
+    c.innerHTML += alertItem('blue','Post-Cement SCVF Re-surveys Required',`Highwood Environmental to conduct post-cement SCVF re-surveys on all wells completing cementing. Canadian Pressure Testing Technologies pressure tests to clear first.`);
+    c.innerHTML += alertItem('green',`${data.wells.filter(w=>w.phase==='Complete').length} Wells Successfully Abandoned`,`AER abandonment orders filed. Gas migration risk assessments (Rewild) completed and submitted. Capstone emissions monitoring reports on file.`);
+  } else {
+    const over = data.cats.filter(c=>c.forecast>c.afe&&c.key!=='contingency');
+    const pend = 3; // simulated open tickets
+    over.forEach(cat=>{
+      c.innerHTML += alertItem('red',`${cat.label} — Trending Over AFE`,`${cat.supplier}: Forecast ${fmt(cat.forecast)} vs. AFE ${fmt(cat.afe)} (${fmt(cat.forecast-cat.afe)} over). May require AFE supplement. Monitor closely.`);
+    });
+    if(data.day>0&&data.day<18){
+      c.innerHTML += alertItem('amber',`${pend} Field Tickets Awaiting Signature`,`Open tickets pending Rewind Site Supervisor sign-off. Total value est. ${fmt(data.totalCommitted*0.12)}. EMI digital submission queued once signed. DSO clock running on ESCO payment timelines.`);
+    }
+    if(data.day>=14&&data.day<18){
+      c.innerHTML += alertItem('red','Post-Abandonment Emissions Report Due',`AER requires post-abdn emissions report within 2 days of cement completion. Capstone crew on standby. Rewind Site Supervisor to review and sign off before submission.`);
+    }
+    c.innerHTML += alertItem('blue','Post-Cement SCVF Re-survey Required',`Highwood Environmental to conduct post-cement SCVF re-survey once Canadian Pressure Testing Technologies clears pressure test.`);
+    if(over.length===0){
+      c.innerHTML += alertItem('green','Program Progressing On Budget',`All service categories within AFE. Forecast final cost is within AFE budget. Bear Well Servicing rig performing on schedule.`);
+    }
+  }
+}
+function alertItem(type, title, body){
+  const map={red:{bg:'var(--ltred)',border:'var(--red)',icon:'🔴',tc:'var(--red)'},
+             amber:{bg:'var(--ltamb)',border:'var(--amber)',icon:'🟡',tc:'var(--amber)'},
+             blue:{bg:'var(--ltteal)',border:'var(--teal)',icon:'🔵',tc:'var(--teal)'},
+             green:{bg:'var(--ltgrn)',border:'var(--green)',icon:'🟢',tc:'var(--green)'}};
+  const m=map[type]||map.blue;
+  return `<div class="alert-item" style="background:${m.bg};border-left:3px solid ${m.border};">
+    <div class="alert-icon">${m.icon}</div>
+    <div><div class="alert-title" style="color:${m.tc};">${title}</div>
+    <div class="alert-body">${body}</div></div></div>`;
+}
+
+// ── INVOICE TABLE ──────────────────────────────────────────────
+function renderInvoices(data, isAll){
+  document.getElementById('invTitle').textContent = isAll
+    ? 'Invoice & Ticket Pipeline — Recent Activity (Program-Wide)'
+    : `Invoice & Ticket Pipeline — ${data.uwi}`;
+
+  const body = document.getElementById('invoiceBody');
+  body.innerHTML='';
+
+  let invs;
+  if(isAll){
+    // Show a selection of recent invoices from across the program
+    invs = [
+      {co:'Bear Well Servicing',       svc:'Service Rig — Day Rate (Multiple Wells)',     date:'Jun 4',  amt:fmtFull(8400),   ticket:'✅ Approved', inv:'📤 Submitted',      days:'Est. 28 days'},
+      {co:'Performance Service',       svc:'Cementing — Primary Isolation (W12, W14)',   date:'Jun 3',  amt:fmtFull(7200),   ticket:'✅ Approved', inv:'✅ Approved',        days:'Est. 19 days'},
+      {co:'Voltage Wireline',          svc:'Wireline Runs 1–3 (W08, W09)',               date:'Jun 2',  amt:fmtFull(3400),   ticket:'✅ Approved', inv:'📤 Submitted',      days:'Est. 31 days'},
+      {co:'Titanium Energy Services',  svc:'Coiled Tubing Operations (W05)',             date:'Jun 5',  amt:fmtFull(5600),   ticket:'⏳ Pending',  inv:'— Not Submitted',   days:'—'},
+      {co:'Innovative Well Abandonment',svc:'Milling & Cleanout Program (W17)',          date:'May 30', amt:fmtFull(2500),   ticket:'✅ Approved', inv:'✅ Approved',        days:'Est. 22 days'},
+      {co:'Highwood Environmental',    svc:'SCVF Survey & Remediation (W20, W21)',      date:'May 28', amt:fmtFull(3650),   ticket:'✅ Approved', inv:'📤 Submitted',      days:'Est. 27 days'},
+      {co:'Capstone',                  svc:'Emissions Monitoring — Pre-Abandonment',    date:'May 26', amt:fmtFull(2100),   ticket:'✅ Approved', inv:'✅ Approved',        days:'Est. 16 days'},
+      {co:'Canadian Pressure Testing Technologies',svc:'Post-Cement Pressure Test (W03,W07)',date:'Jun 1',amt:fmtFull(1900),ticket:'✅ Approved', inv:'📤 Submitted',      days:'Est. 30 days'},
+      {co:'Innovative Well Abandonment',svc:'Cut & Cap — Wellhead Removal (W11, W13)',  date:'May 29', amt:fmtFull(1600),   ticket:'⏳ Pending',  inv:'— Not Submitted',   days:'—'},
+      {co:'Rewind',                    svc:'Site Supervisor — Week 5 (Multiple Wells)', date:'Jun 6',  amt:fmtFull(3200),   ticket:'⏳ Pending',  inv:'— Not Submitted',   days:'—'},
+    ];
+  } else {
+    const afe = data.afe;
+    const ns = (i)=>H(data.uwi,i*7+200);
+    const pool=[
+      {co:'Bear Well Servicing',        svc:'Service Rig — Day Rate',          daysAgo:2, mult:0.080},
+      {co:'Titanium Energy Services',   svc:'Coiled Tubing Operations',        daysAgo:4, mult:0.070},
+      {co:'Voltage Wireline',           svc:'Wireline Runs 1–3',               daysAgo:6, mult:0.050},
+      {co:'Performance Service',        svc:'Primary Isolation Cement Job',    daysAgo:1, mult:0.090},
+      {co:'Innovative Well Abandonment',svc:'Milling & Cleanout Program',      daysAgo:8, mult:0.030},
+      {co:'Highwood Environmental',     svc:'SCVF Survey & Remediation',       daysAgo:10,mult:0.040},
+      {co:'Capstone',                   svc:'Emissions Monitoring — Pre-Abdn', daysAgo:12,mult:0.015},
+      {co:'Canadian Pressure Testing Technologies',svc:'Post-Cement Pressure Test',daysAgo:3,mult:0.025},
+      {co:'Innovative Well Abandonment',svc:'Cut & Cap — Wellhead',            daysAgo:5, mult:0.025},
+    ];
+    const tStats=['✅ Approved','✅ Approved','✅ Approved','⏳ Pending','⏳ Pending'];
+    const iStats=['✅ Approved','📤 Submitted','— Not Submitted'];
+    const num = Math.max(3, Math.min(8, data.day));
+    invs = pool.slice(0,num).map((inv,ii)=>{
+      const s=ns(ii);
+      const ts=tStats[RI(s,0,4)]; const pend=ts.includes('Pending');
+      const iv=pend?'— Not Submitted':iStats[RI(s+1,0,1)];
+      const amt=Math.round(afe*inv.mult*(0.88+R(s+2,0,0.24)));
+      const days=pend?'—':`Est. ${RI(s+3,16,38)} days`;
+      const d=new Date();d.setDate(d.getDate()-inv.daysAgo);
+      return{co:inv.co,svc:inv.svc,date:d.toLocaleDateString('en-CA',{month:'short',day:'numeric'}),amt:fmtFull(amt),ticket:ts,inv:iv,days};
+    });
+  }
+
+  invs.forEach(r=>{
+    const pend=r.ticket.includes('Pending');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="text-align:left;font-weight:600;">${r.co}</td>
+      <td style="text-align:left;color:#555;font-weight:400;">${r.svc}</td>
+      <td>${r.date}</td><td style="font-weight:700;">${r.amt}</td>
+      <td style="color:${pend?'#D4811A':'#1A7A3C'};font-weight:600;">${r.ticket}</td>
+      <td style="color:${r.inv.includes('Not')?'#aab':r.inv.includes('Approved')?'#1A7A3C':'#2E75B6'};font-weight:600;">${r.inv}</td>
+      <td style="color:${r.days==='—'?'#aab':'#1A3A5C'};font-weight:${r.days==='—'?400:600};">${r.days}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOWNLOAD
+// ═══════════════════════════════════════════════════════════════
+function downloadExcel(){
+  const v=sel.value; const wb=XLSX.utils.book_new();
+  if(v==='ALL'){
+    const r=getRollup();
+    // Sheet 1 — rollup by category
+    const hdr=['Category','Supplier','Total AFE ($)','Actual ($)','Committed ($)','Forecast ($)','Variance ($)','% Used'];
+    const rows=r.cats.map(c=>{const p=c.afe>0?(c.actual/c.afe*100):0;return[c.label,c.supplier,c.afe,Math.round(c.actual),Math.round(c.committed),Math.round(c.forecast),Math.round(c.forecast-c.afe),+(p/100).toFixed(3)];});
+    rows.push(['TOTAL','',r.afe,Math.round(r.totalActual),Math.round(r.totalCommitted),Math.round(r.totalForecast),Math.round(r.totalForecast-r.afe),+(r.totalActual/r.afe).toFixed(3)]);
+    const ws1=XLSX.utils.aoa_to_sheet([['EMI CostTrack™ — Abandonment Program Rollup'],['Operator: Whitecap Resources Inc.'],['Engineering: Rewild'],['Generated: '+new Date().toLocaleDateString()],[],hdr,...rows]);
+    ws1['!cols']=[{wch:36},{wch:32},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws1,'Program Rollup');
+    // Sheet 2 — per-well summary
+    const hdr2=['UWI','Phase','Day','AFE ($)','Actual ($)','Committed ($)','Forecast ($)','Variance ($)','% Used'];
+    const rows2=UWIS.map(uwi=>{const w=getWell(uwi);const p=(w.totalActual/w.afe*100).toFixed(1);return[w.uwi,w.phase,w.day,w.afe,Math.round(w.totalActual),Math.round(w.totalCommitted),Math.round(w.totalForecast),Math.round(w.totalForecast-w.afe),+(p/100).toFixed(3)];});
+    const tA=UWIS.reduce((a,u)=>a+getWell(u).afe,0);
+    const ws2=XLSX.utils.aoa_to_sheet([hdr2,...rows2,['TOTAL (38 WELLS)','','',tA,Math.round(getRollup().totalActual),'','','','']]);
+    ws2['!cols']=[{wch:26},{wch:18},{wch:6},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws2,'Well Summary');
+    XLSX.writeFile(wb,'EMI_Abandonment_Program_Rollup.xlsx');
+  } else {
+    const w=getWell(v);
+    const hdr=['Category','Supplier','AFE ($)','Actual ($)','Committed ($)','Forecast ($)','Variance ($)','% Used','Status'];
+    const rows=w.cats.map(c=>{const p=c.afe>0?(c.actual/c.afe*100):0;const ov=c.forecast>c.afe;const wa=!ov&&p>78;return[c.label,c.supplier,c.afe,Math.round(c.actual),Math.round(c.committed),Math.round(c.forecast),Math.round(c.forecast-c.afe),+(p/100).toFixed(3),ov?'Over AFE':wa?'Watch':'On Budget'];});
+    rows.push(['TOTAL','',w.afe,Math.round(w.totalActual),Math.round(w.totalCommitted),Math.round(w.totalForecast),Math.round(w.totalForecast-w.afe),+(w.totalActual/w.afe).toFixed(3),'']);
+    const ws=XLSX.utils.aoa_to_sheet([['EMI CostTrack™ — Abandonment AFE Report'],['UWI: '+w.uwi],['Phase: '+w.phase],['Day: '+w.day+' of 18'],['AFE: $'+w.afe.toLocaleString()],['Generated: '+new Date().toLocaleDateString()],[],hdr,...rows]);
+    ws['!cols']=[{wch:36},{wch:32},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,'AFE Detail');
+    XLSX.writeFile(wb,'EMI_Abandonment_'+v.replace(/\//g,'_').replace(/\s/g,'')+'.xlsx');
+  }
+}
+
+function downloadCSV(){
+  const v=sel.value;
+  let csv='',fn='';
+  if(v==='ALL'){
+    csv='UWI,Phase,Day,AFE ($),Actual ($),Committed ($),Forecast ($),Variance ($),% Used\n';
+    UWIS.forEach(uwi=>{const w=getWell(uwi);csv+=`"${w.uwi}","${w.phase}",${w.day},${w.afe},${Math.round(w.totalActual)},${Math.round(w.totalCommitted)},${Math.round(w.totalForecast)},${Math.round(w.totalForecast-w.afe)},${(w.totalActual/w.afe*100).toFixed(1)}%\n`;});
+    fn='EMI_Abandonment_Program_Rollup.csv';
+  } else {
+    const w=getWell(v);
+    csv=`UWI,${w.uwi}\nPhase,${w.phase}\nDay,${w.day} of 18\n\n`;
+    csv+='Category,Supplier,AFE ($),Actual ($),Committed ($),Forecast ($),Variance ($),% Used\n';
+    w.cats.forEach(c=>{csv+=`"${c.label}","${c.supplier}",${c.afe},${Math.round(c.actual)},${Math.round(c.committed)},${Math.round(c.forecast)},${Math.round(c.forecast-c.afe)},${c.afe>0?(c.actual/c.afe*100).toFixed(1):0}%\n`;});
+    fn='EMI_Abandonment_'+v.replace(/\//g,'_')+'.csv';
+  }
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('liveDate').textContent='Updated: '+new Date().toLocaleString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+render(getRollup());
+</script>
+</body>
+</html>
