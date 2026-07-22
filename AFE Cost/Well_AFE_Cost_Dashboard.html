@@ -72,6 +72,23 @@
     animation: pulse 1.6s infinite;
   }
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .home-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #cfd6e4;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .home-btn:hover {
+    background: rgba(201,168,76,0.18);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
   .topbar-date { font-size: 11px; color: #889; }
 
   /* ── LAYOUT ── */
@@ -197,6 +214,30 @@
     white-space: nowrap;
   }
 
+  /* ── VIEW TOGGLE ── */
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: var(--lgray);
+    border-radius: 7px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+  .toggle-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    padding: 6px 12px;
+    border-radius: 5px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .toggle-btn:hover:not(.active) { color: var(--navy); }
+  .toggle-btn.active { background: var(--navy); color: var(--white); }
+
   /* ── BOTTOM ROW ── */
   .bottom-row {
     display: grid;
@@ -317,6 +358,7 @@
   <div class="topbar-right">
     <div class="well-badge">📍 Clearwater 14-22-065-05W5</div>
     <div class="status-live"><div class="pulse"></div>LIVE</div>
+    <a class="home-btn" href="../index.html" title="Back to dashboard index">🏠 Home</a>
     <div class="topbar-date" id="liveDate"></div>
   </div>
 </div>
@@ -430,11 +472,20 @@
       </div>
     </div>
 
-    <!-- Donut: Cost by Category -->
+    <!-- Cost by Category: Donut / Spend vs Budget toggle -->
     <div class="chart-card">
-      <div class="chart-title">Spend by Cost Category</div>
-      <div class="chart-sub">Actual spend to date — $3.41M total</div>
+      <div class="table-header-row" style="margin-bottom:10px;">
+        <div>
+          <div class="chart-title">Spend by Cost Category</div>
+          <div class="chart-sub" style="margin-bottom:0;">Actual spend to date — $3.41M total</div>
+        </div>
+        <div class="view-toggle">
+          <button type="button" class="toggle-btn active" data-view="donut" onclick="setCategoryView('donut')">Doughnut</button>
+          <button type="button" class="toggle-btn" data-view="line" onclick="setCategoryView('line')">Spend vs Budget</button>
+        </div>
+      </div>
       <canvas id="donutChart" height="220"></canvas>
+      <canvas id="categoryLineChart" height="220" style="display:none;"></canvas>
     </div>
   </div>
 
@@ -743,6 +794,50 @@ new Chart(ctx2, {
     }
   }
 });
+
+// ── CATEGORY SPEND VS BUDGET (LINE) CHART ──────────────────────────────────
+const catLabels = afeData.map(r => r.cat);
+const catActual = afeData.map(r => r.actual);
+const catBudget = afeData.map(r => r.afe);
+
+const ctx4 = document.getElementById('categoryLineChart').getContext('2d');
+const categoryLineChart = new Chart(ctx4, {
+  type: 'bar',
+  data: {
+    labels: catLabels,
+    datasets: [
+      { label:'Actual Spend', data: catActual, backgroundColor:'#2E75B6', borderRadius:3, maxBarThickness:14 },
+      { label:'AFE Budget', data: catBudget, backgroundColor:'#C9A84C', borderRadius:3, maxBarThickness:14 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{
+      legend:{ display:true, position:'top', align:'end', labels:{ font:{size:9}, boxWidth:10, padding:8 } },
+      tooltip:{ mode:'index', intersect:false, callbacks:{ label: ctx => ' '+ctx.dataset.label+': $'+(ctx.raw/1000).toFixed(0)+'K' } }
+    },
+    scales:{
+      x:{ ticks:{ font:{size:8}, color:'#888', maxRotation:55, minRotation:55 }, grid:{ display:false } },
+      y:{ ticks:{ font:{size:9}, color:'#888', callback: v=>'$'+(v/1000).toFixed(0)+'K' }, grid:{ color:'#eee' } }
+    },
+    interaction:{ mode:'index', intersect:false }
+  }
+});
+
+// ── CATEGORY VIEW TOGGLE ────────────────────────────────────────────────────
+function setCategoryView(view){
+  const donutCanvas = document.getElementById('donutChart');
+  const lineCanvas = document.getElementById('categoryLineChart');
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  if(view === 'donut'){
+    lineCanvas.style.display = 'none';
+    donutCanvas.style.display = 'block';
+  } else {
+    donutCanvas.style.display = 'none';
+    lineCanvas.style.display = 'block';
+    categoryLineChart.resize();
+  }
+}
 
 // ── DAILY SPEND CHART ──────────────────────────────────────────────────────
 const last14Actual = actualDaily.slice(-14);

@@ -30,6 +30,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#ECEEF2;color:var(--navy
 .pulse{width:7px;height:7px;border-radius:50%;background:#4AE080;animation:pulse 1.6s infinite;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
 .topbar-date{font-size:11px;color:#889;}
+.home-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.22);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#cfd6e4;text-decoration:none;transition:background 0.15s,border-color 0.15s,color 0.15s;}
+.home-btn:hover{background:rgba(201,168,76,0.18);border-color:var(--gold);color:var(--gold);}
 
 /* CONTAINER */
 .container{padding:20px 24px;max-width:1400px;margin:0 auto;}
@@ -155,6 +157,7 @@ tfoot td:last-child{border-radius:0 0 4px 0;}
   <div class="topbar-right">
     <div class="well-badge" id="topBadge">📍 Program Rollup — 38 Wells</div>
     <div class="status-live"><div class="pulse"></div>LIVE</div>
+    <a class="home-btn" href="../index.html" title="Back to dashboard index">🏠 Home</a>
     <div class="topbar-date" id="liveDate"></div>
   </div>
 </div>

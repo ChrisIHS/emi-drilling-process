@@ -7,6 +7,9 @@
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1a1a2e; padding: 28px; max-width: 900px; }
 h2 { font-size: 20px; font-weight: 800; color: #1a1a2e; margin-bottom: 4px; }
 .subtitle { font-size: 12px; color: #777; margin-bottom: 28px; }
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.home-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #1a1a2e; border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 700; color: #1a1a2e; text-decoration: none; flex-shrink: 0; transition: background 0.15s, color 0.15s; }
+.home-btn:hover { background: #1a1a2e; color: #fff; }
 .section-title { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
 .bar-row { margin-bottom: 18px; }
 .bar-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 5px; }
@@ -38,8 +41,13 @@ tbody td:first-child { text-align: left; }
 </style>
 </head>
 <body>
-<h2>Western Canada Oil &amp; Gas Wells Drilled — 2020 to 2024</h2>
-<p class="subtitle">Annual new well counts by province &nbsp;|&nbsp; Sources: CAOEC, AER, BCER, CAPP/Statista</p>
+<div class="page-head">
+  <div>
+    <h2>Western Canada Oil &amp; Gas Wells Drilled — 2020 to 2024</h2>
+    <p class="subtitle">Annual new well counts by province &nbsp;|&nbsp; Sources: CAOEC, AER, BCER, CAPP/Statista</p>
+  </div>
+  <a class="home-btn" href="index.html" title="Back to dashboard index">🏠 Home</a>
+</div>
 
 <p class="section-title">Total Wells Drilled — All Western Canada Provinces</p>
 <div id="barchart"></div>

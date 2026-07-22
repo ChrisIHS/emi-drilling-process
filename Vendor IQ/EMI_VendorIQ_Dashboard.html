@@ -27,6 +27,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#ECEEF2;color:var(--navy
 .tb-badge{background:rgba(201,168,76,.15);border:1px solid var(--gold);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--gold)}
 .tb-org{font-size:11px;color:#aab}
 .live-dot{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#4AE080}
+.home-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.22);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#cfd6e4;text-decoration:none;transition:background 0.15s,border-color 0.15s,color 0.15s}
+.home-btn:hover{background:rgba(201,168,76,0.18);border-color:var(--gold);color:var(--gold)}
 .pulse{width:7px;height:7px;border-radius:50%;background:#4AE080;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 
@@ -190,6 +192,7 @@ select:focus,input:focus{outline:none;border-color:var(--blue)}
     <div class="tb-org">Magus Engineering Ltd. &nbsp;|&nbsp; Whitecap Resources Inc.</div>
     <div class="tb-badge">Basin: AB / SK &nbsp;·&nbsp; 2024–2025</div>
     <div class="live-dot"><div class="pulse"></div>LIVE DATA</div>
+    <a class="home-btn" href="../index.html" title="Back to dashboard index">🏠 Home</a>
   </div>
 </div>
 
