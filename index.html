@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMI Drilling Process — Dashboards</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1A3A5C;
+    --blue:   #2E75B6;
+    --gold:   #C9A84C;
+    --ltgold: #FFF8E7;
+    --lgray:  #F4F5F7;
+    --mgray:  #DDE1E9;
+    --dgray:  #4A4A4A;
+    --white:  #FFFFFF;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #ECEEF2;
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--navy);
+    padding: 18px 28px;
+  }
+  .topbar-logo { font-size: 20px; font-weight: 800; color: var(--gold); letter-spacing: 0.5px; }
+  .topbar-sub { font-size: 12px; color: #aab; margin-top: 2px; }
+
+  .container { padding: 32px 24px; max-width: 960px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 28px 0 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--mgray); }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-top: 3px solid var(--gold);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+  .card-desc { font-size: 12px; color: var(--dgray); line-height: 1.4; }
+
+  .emi-footer {
+    background: var(--navy);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .emi-footer-brand { font-size: 14px; font-weight: 800; color: var(--gold); }
+  .emi-footer-tag   { font-size: 11px; color: #aab; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">EMI Drilling Process</div>
+  <div class="topbar-sub">Dashboard &amp; tool index</div>
+</div>
+
+<div class="container">
+
+  <div class="section-label">Well Cost Dashboards</div>
+  <div class="card-grid">
+    <a class="card" href="AFE Cost/Well_AFE_Cost_Dashboard.html">
+      <div class="card-title">Well Cost AFE Dashboard</div>
+      <div class="card-desc">Real-time drilling AFE performance — spend curve, cost-by-category, and invoice pipeline for an active well.</div>
+    </a>
+    <a class="card" href="Abandonment Dashboard/Abandonment_Program_Dashboard.html">
+      <div class="card-title">Abandonment AFE Dashboard</div>
+      <div class="card-desc">Cost tracking for well abandonment programs against AFE budget.</div>
+    </a>
+  </div>
+
+  <div class="section-label">VendorIQ — Supplier Intelligence</div>
+  <div class="card-grid">
+    <a class="card" href="Vendor IQ/EMI_VendorIQ_Dashboard.html">
+      <div class="card-title">EMI VendorIQ Dashboard</div>
+      <div class="card-desc">Supplier intelligence platform overview — vendor performance and benchmarking.</div>
+    </a>
+    <a class="card" href="Vendor IQ/VendorIQ_ROI_Calculator.html">
+      <div class="card-title">VendorIQ ROI &amp; Pricing Calculator</div>
+      <div class="card-desc">Interactive calculator for estimating ROI and pricing impact from vendor selection.</div>
+    </a>
+    <a class="card" href="Vendor IQ/VendorIQ_Scorecard_Redtail.html">
+      <div class="card-title">VendorIQ Scorecard — Redtail Fluid Services</div>
+      <div class="card-desc">Sample vendor scorecard for Redtail Fluid Services Ltd.</div>
+    </a>
+  </div>
+
+  <div class="section-label">Reference &amp; Workflow</div>
+  <div class="card-grid">
+    <a class="card" href="Engineering_Firm_Workflow.html">
+      <div class="card-title">Engineering Firm Drilling Program Workflow</div>
+      <div class="card-desc">Workflow reference for engineering firm involvement in the drilling program.</div>
+    </a>
+    <a class="card" href="western_canada_wells_drilled.html">
+      <div class="card-title">Western Canada Wells Drilled</div>
+      <div class="card-desc">Regional well activity reference.</div>
+    </a>
+  </div>
+
+  <div class="emi-footer">
+    <div>
+      <div class="emi-footer-brand">EMI CostTrack™</div>
+      <div class="emi-footer-tag">Dashboards for the EMI Drilling Process project</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
