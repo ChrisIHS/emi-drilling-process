@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reclamation &amp; Remediation Dashboard — EMI CostTrack™</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#16324F;--navy2:#1F4368;--blue:#2E75B6;--ltblue:#E8F1F8;
+  --gold:#C9A84C;--ltgold:#FBF6E9;
+  --green:#1E7A3F;--ltgrn:#E9F5EE;
+  --red:#C0392B;--ltred:#FBEBE9;
+  --amber:#D4811A;--ltamb:#FCF2E3;
+  --teal:#176B6B;--ltteal:#E3F2F2;
+  --earth:#6B4423;--ltearth:#F2EAE1;
+  --purple:#5B3E8E;--ltpurple:#EFEAF7;
+  --lgray:#F6F7F9;--mgray:#E2E6EC;--dgray:#4A4A4A;--white:#FFF;
+  --shadow:0 1px 3px rgba(22,50,79,.08),0 1px 2px rgba(22,50,79,.04);
+  --shadow-md:0 4px 12px rgba(22,50,79,.10);
+}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#EDF0F4;color:var(--navy);font-size:14px;}
+
+.topbar{background:linear-gradient(135deg,#1E4A2E 0%,#2A6340 55%,#35784E 100%);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.topbar-logo{font-size:19px;font-weight:800;color:#E8D48A;letter-spacing:.5px;}
+.topbar-sub{font-size:11px;color:#B8D4C2;margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.badge{background:rgba(232,212,138,.15);border:1px solid rgba(232,212,138,.55);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;color:#E8D48A;}
+.status-live{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(140,230,170,.5);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#8CE6AA;}
+.pulse{width:7px;height:7px;border-radius:50%;background:#8CE6AA;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.35)}}
+.topbar-date{font-size:11px;color:#9BBFA8;}
+.home-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#DCEBE1;text-decoration:none;transition:background .15s,border-color .15s,color .15s;}
+.home-btn:hover{background:rgba(232,212,138,.2);border-color:#E8D48A;color:#E8D48A;}
+
+.container{padding:20px 24px 28px;max-width:1420px;margin:0 auto;}
+
+.selector-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+.sel-wrap{flex:1;min-width:420px;background:#fff;border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:14px;border-left:4px solid var(--green);box-shadow:var(--shadow);}
+.sel-label{font-size:10px;font-weight:700;color:#8896A6;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+.sel{flex:1;background:#1E4A2E;color:#fff;border:none;border-radius:7px;padding:9px 36px 9px 14px;font-size:13px;font-weight:700;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23E8D48A' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;font-family:'Consolas','SF Mono',monospace;}
+.sel option{background:#1E4A2E;font-family:'Consolas','SF Mono',monospace;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;box-shadow:var(--shadow);}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.btn-excel{background:var(--green);color:#fff;}
+.btn-csv{background:#fff;color:var(--green);border:1.5px solid var(--green);}
+
+/* LIABILITY BANNER */
+.liab-card{background:linear-gradient(135deg,#1E4A2E 0%,#2A6340 60%,#35784E 100%);border-radius:12px;padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow-md);color:#fff;position:relative;overflow:hidden;}
+.liab-card::before{content:'';position:absolute;top:-50px;right:-30px;width:220px;height:220px;border-radius:50%;background:rgba(232,212,138,.07);}
+.liab-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.liab-title{font-size:14px;font-weight:800;}
+.liab-title span{color:#E8D48A;}
+.liab-sub{font-size:11px;color:#B8D4C2;margin-top:2px;}
+.liab-pill{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;}
+.liab-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:16px;}
+.lg-item{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:12px 14px;}
+.lg-label{font-size:9px;font-weight:700;color:#B8D4C2;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+.lg-value{font-size:20px;font-weight:800;line-height:1;}
+.lg-sub{font-size:9.5px;color:#9BBFA8;margin-top:4px;}
+.liab-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:#B8D4C2;margin-bottom:6px;}
+.liab-bar{position:relative;height:22px;background:rgba(255,255,255,.09);border-radius:11px;}
+.liab-fill{position:absolute;left:0;top:0;height:100%;border-radius:11px;background:linear-gradient(90deg,#2E8B57,#5FD68A);display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-size:10px;font-weight:800;transition:width .6s ease;}
+.liab-progress{position:absolute;left:0;top:0;height:100%;border-radius:11px;background:rgba(232,212,138,.3);}
+.liab-note{font-size:9.5px;color:#8FB39C;margin-top:16px;line-height:1.5;}
+
+/* INFO BAR */
+.info-bar{background:#fff;border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:stretch;border-left:4px solid var(--earth);box-shadow:var(--shadow);}
+.ii{display:flex;flex-direction:column;padding:0 20px;justify-content:center;}
+.ii:first-child{padding-left:0;}
+.ii-l{font-size:9px;font-weight:700;color:#8896A6;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+.ii-v{font-size:13px;font-weight:700;}
+.ii-d{width:1px;background:var(--mgray);}
+
+/* SITE CONDITION STRIP */
+.cond-bar{background:#fff;border-radius:10px;padding:14px 20px;margin-bottom:16px;border-left:4px solid var(--teal);box-shadow:var(--shadow);}
+.cond-title{font-size:10px;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.cond-items{display:flex;flex-wrap:wrap;gap:8px;}
+.cpill{display:flex;align-items:center;gap:6px;padding:5px 13px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;}
+.c-clean{background:var(--ltgrn);color:var(--green);border-color:#A8D5B8;}
+.c-minor{background:var(--ltamb);color:var(--amber);border-color:#EBC893;}
+.c-major{background:var(--ltred);color:var(--red);border-color:#E8A39A;}
+.c-info{background:var(--ltblue);color:var(--blue);border-color:#A9CDE8;}
+.cdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* MILESTONE TRACKER */
+.ms-track{display:flex;align-items:stretch;margin-bottom:16px;gap:6px;}
+.ms-seg{flex:1;text-align:center;padding:10px 5px;font-size:9.5px;font-weight:700;border-radius:6px;position:relative;line-height:1.25;}
+.ms-done{background:var(--navy);color:#fff;}
+.ms-active{background:var(--gold);color:var(--navy);animation:glow 2.2s infinite;}
+.ms-hold{background:var(--ltamb);color:var(--amber);border:1.5px dashed var(--amber);}
+.ms-skip{background:var(--ltgrn);color:var(--green);border:1.5px dashed #A8D5B8;}
+.ms-pend{background:var(--mgray);color:#8896A6;}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.45)}50%{box-shadow:0 0 0 5px rgba(201,168,76,.15)}}
+.ms-date{font-size:8.5px;font-weight:500;display:block;margin-top:3px;opacity:.88;}
+
+.section-label{font-size:10px;font-weight:800;color:#8896A6;text-transform:uppercase;letter-spacing:.7px;margin:4px 0 10px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mgray);}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:#fff;border-radius:10px;padding:15px 17px;box-shadow:var(--shadow);border-top:3px solid;transition:box-shadow .15s;}
+.stat-card:hover{box-shadow:var(--shadow-md);}
+.sc-l{font-size:9.5px;font-weight:700;color:#8896A6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
+.sc-v{font-size:23px;font-weight:800;margin-bottom:3px;line-height:1;}
+.sc-s{font-size:10px;color:#8896A6;}
+.sc-b{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-top:6px;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:16px;}
+.chart-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:var(--shadow);}
+.ch-t{font-size:13px;font-weight:700;margin-bottom:3px;}
+.ch-s{font-size:10px;color:#8896A6;margin-bottom:14px;}
+.mini{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+.mm{flex:1;min-width:95px;background:var(--lgray);border-radius:8px;padding:11px 12px;text-align:center;}
+.mm-v{font-size:18px;font-weight:800;}
+.mm-l{font-size:8.5px;color:#8896A6;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;font-weight:700;}
+.mm-x{font-size:9px;margin-top:2px;}
+
+/* TABLES */
+.table-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px;}
+.th-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--navy);color:#fff;padding:9px 11px;text-align:right;font-weight:600;font-size:10.5px;}
+thead th:first-child{text-align:left;border-radius:6px 0 0 0;}
+thead th:last-child{border-radius:0 6px 0 0;}
+tbody tr{border-bottom:1px solid #EDF0F4;}
+tbody tr:hover{background:var(--ltblue);}
+tbody td{padding:8px 11px;text-align:right;font-variant-numeric:tabular-nums;}
+tbody td:first-child{text-align:left;font-weight:600;}
+tfoot td{padding:11px;text-align:right;font-weight:700;background:var(--navy);color:#fff;font-variant-numeric:tabular-nums;}
+tfoot td:first-child{text-align:left;border-radius:0 0 0 6px;}
+tfoot td:last-child{border-radius:0 0 6px 0;}
+.vbar-w{display:flex;align-items:center;gap:8px;}
+.vbar-bg{flex:1;height:7px;background:var(--mgray);border-radius:4px;overflow:hidden;min-width:70px;}
+.vbar-f{height:100%;border-radius:4px;}
+.vpct{font-size:10px;font-weight:700;min-width:36px;text-align:right;}
+.pill{display:inline-block;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.stage-tag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:9.5px;font-weight:700;background:var(--ltpurple);color:var(--purple);}
+.table-scroll{overflow-x:auto;}
+
+/* BOTTOM */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:8px;margin-bottom:8px;}
+.a-i{font-size:15px;flex-shrink:0;margin-top:1px;}
+.a-t{font-weight:700;font-size:11.5px;margin-bottom:3px;}
+.a-b{color:var(--dgray);font-size:10.5px;line-height:1.5;}
+
+.footer{background:linear-gradient(135deg,#1E4A2E,#2A6340);border-radius:10px;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.f-b{font-size:14px;font-weight:800;color:#E8D48A;}
+.f-t{font-size:11px;color:#B8D4C2;}
+.f-r{font-size:10px;color:#8FB39C;}
+@media(max-width:1100px){.liab-grid,.stat-grid{grid-template-columns:repeat(2,1fr);}.charts-row,.bottom-row{grid-template-columns:1fr;}.ms-track{flex-wrap:wrap;}.ms-seg{min-width:110px;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-logo">EMI CostTrack™ — Reclamation</div>
+    <div class="topbar-sub">Reclamation &amp; Remediation Program Dashboard — Multi-Year Liability Retirement</div>
+  </div>
+  <div class="topbar-right">
+    <div class="badge" id="topBadge">🌱 Program Rollup — 38 Sites</div>
+    <div class="status-live"><div class="pulse"></div>LIVE</div>
+    <a class="home-btn" href="../index.html" title="Back to dashboard index">🏠 Home</a>
+    <div class="topbar-date" id="liveDate"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="selector-row">
+    <div class="sel-wrap">
+      <span class="sel-label">Select Site:</span>
+      <select class="sel" id="siteSelect" onchange="onChange()">
+        <option value="ALL">🌱 ALL SITES — Program Rollup (38 Sites)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-excel" onclick="exportExcel()">⬇ Excel</button>
+      <button class="btn btn-csv" onclick="exportCSV()">⬇ CSV</button>
+    </div>
+  </div>
+
+  <!-- LIABILITY RETIREMENT BANNER -->
+  <div class="liab-card">
+    <div class="liab-head">
+      <div>
+        <div class="liab-title">🏛 Liability Retirement &amp; Reclamation Certificate Progress — <span>Balance Sheet Impact</span></div>
+        <div class="liab-sub">AER Directive 001 Reclamation Certificates | Manual 023 Closure Spend | ARO Liability Retirement — Whitecap Resources Inc.</div>
+      </div>
+      <div class="liab-pill" id="liabPill"></div>
+    </div>
+    <div class="liab-grid">
+      <div class="lg-item">
+        <div class="lg-label">Total Reclamation Liability (ARO)</div>
+        <div class="lg-value" style="color:#E8D48A;" id="lgTotal">—</div>
+        <div class="lg-sub">Estimated closure obligation, 38 sites</div>
+      </div>
+      <div class="lg-item">
+        <div class="lg-label">Liability Retired (RC Issued)</div>
+        <div class="lg-value" style="color:#5FD68A;" id="lgRetired">—</div>
+        <div class="lg-sub" id="lgRetiredSub">—</div>
+      </div>
+      <div class="lg-item">
+        <div class="lg-label">Reclamation Certificates Issued</div>
+        <div class="lg-value" id="lgRC">—</div>
+        <div class="lg-sub" id="lgRCSub">—</div>
+      </div>
+      <div class="lg-item">
+        <div class="lg-label">Qualifying Closure Spend (Recl.)</div>
+        <div class="lg-value" style="color:#8FD4F0;" id="lgQual">—</div>
+        <div class="lg-sub">Counts toward AER mandatory quota</div>
+      </div>
+      <div class="lg-item">
+        <div class="lg-label">Annual Carrying Cost Burn</div>
+        <div class="lg-value" style="color:#F2A089;" id="lgCarry">—</div>
+        <div class="lg-sub" id="lgCarrySub">—</div>
+      </div>
+    </div>
+    <div class="liab-bar-labels"><span>0 of 38 sites certified</span><span id="liabBarMax">38 sites</span></div>
+    <div class="liab-bar">
+      <div class="liab-progress" id="liabProgress"></div>
+      <div class="liab-fill" id="liabFill"></div>
+    </div>
+    <div class="liab-note">
+      A Reclamation Certificate is the milestone that removes a site from the operator's inactive liability inventory and retires the associated ARO from the balance sheet. Reclamation and remediation spend qualifies toward the AER mandatory closure spend quota alongside downhole abandonment. Sites awaiting certification continue to accrue surface lease rentals, municipal taxes and inspection costs — the carrying-cost burn shown above.
+    </div>
+  </div>
+
+  <div class="info-bar" id="infoBar"></div>
+
+  <div class="cond-bar">
+    <div class="cond-title" id="condTitle">🧪 Site Condition &amp; Environmental Findings</div>
+    <div class="cond-items" id="condItems"></div>
+  </div>
+
+  <!-- MILESTONE TRACKER -->
+  <div id="msSection" style="display:none;">
+    <div class="section-label">Reclamation Milestone Progress <span style="text-transform:none;letter-spacing:0;font-weight:500;color:#A9B4C0;">— multi-year, milestone-driven (not day-driven)</span></div>
+    <div class="ms-track" id="msTrack"></div>
+  </div>
+
+  <div class="section-label" id="statLabel">Key Cost Metrics</div>
+  <div class="stat-grid" id="statGrid"></div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="ch-t" id="chT">Multi-Year Reclamation Spend Profile</div>
+      <div class="ch-s" id="chS">Actual and forecast spend by program year</div>
+      <canvas id="mainChart" height="220"></canvas>
+      <div class="mini" id="mini"></div>
+    </div>
+    <div class="chart-card">
+      <div class="ch-t">Spend by Reclamation Phase</div>
+      <div class="ch-s" id="donutS">Actual spend to date</div>
+      <canvas id="donutChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- MILESTONE FUNNEL (rollup only) -->
+  <div class="chart-card" id="funnelCard" style="margin-bottom:16px;">
+    <div class="ch-t">Sites by Reclamation Milestone Stage</div>
+    <div class="ch-s">Where the 38 sites currently sit in the reclamation lifecycle — the pipeline to Reclamation Certificate</div>
+    <canvas id="funnelChart" height="130"></canvas>
+  </div>
+
+  <!-- AFE TABLE -->
+  <div class="table-card">
+    <div class="th-row">
+      <div>
+        <div class="ch-t" id="tblTitle">Reclamation AFE Line Item Performance</div>
+        <div class="ch-s">Actual spend vs. reclamation AFE by phase. Contingent items only incur cost where site assessment triggers them.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="pill" style="background:var(--ltgrn);color:var(--green);">✓ On Budget</span>
+        <span class="pill" style="background:var(--ltamb);color:var(--amber);">⚠ Watch</span>
+        <span class="pill" style="background:var(--ltred);color:var(--red);">▲ Over AFE</span>
+        <span class="pill" style="background:var(--ltblue);color:var(--blue);">◇ Not Triggered</span>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th style="text-align:left;min-width:210px;">Reclamation Phase / Line Item</th>
+          <th style="text-align:left;">Supplier</th>
+          <th style="text-align:left;">Stage</th>
+          <th>AFE Budget</th><th>Actual to Date</th><th>Committed</th>
+          <th>Forecast Final</th><th>Variance $</th>
+          <th style="min-width:140px;">Budget Used</th><th>Status</th>
+        </tr></thead>
+        <tbody id="tblBody"></tbody>
+        <tfoot id="tblFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="chart-card">
+      <div class="section-label">Active Alerts &amp; Regulatory Flags</div>
+      <div id="alerts"></div>
+    </div>
+    <div class="chart-card">
+      <div class="ch-t" id="ch2T">Liability Retirement Curve</div>
+      <div class="ch-s" id="ch2S">Cumulative ARO retired as Reclamation Certificates are issued</div>
+      <canvas id="chart2" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- SITE REGISTER (rollup only) -->
+  <div class="table-card" id="registerCard">
+    <div class="th-row">
+      <div>
+        <div class="ch-t">Site Register — Reclamation Status &amp; Total Closure Cost</div>
+        <div class="ch-s">Combined abandonment + reclamation cost per site, with milestone status and Reclamation Certificate progress</div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th style="text-align:left;">UWI</th>
+          <th style="text-align:left;">Site Condition</th>
+          <th style="text-align:left;">Current Milestone</th>
+          <th>Abdn Cost</th><th>Recl. AFE</th><th>Recl. Actual</th>
+          <th>Total Closure</th><th>Target RC Year</th><th>Status</th>
+        </tr></thead>
+        <tbody id="regBody"></tbody>
+        <tfoot id="regFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>
+      <div class="f-b">EMI CostTrack™ — Reclamation Module</div>
+      <div class="f-t">Reclamation &amp; Remediation Dashboard powered by Enter My Invoice (EMI)</div>
+    </div>
+    <div class="f-r">Pairs with the Abandonment AFE Dashboard for total closure cost &nbsp;|&nbsp; entermyinvoice.com</div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// MILESTONES — the reclamation lifecycle
+// ═══════════════════════════════════════════════════════════
+const MILESTONES = [
+  {id:1, label:'Phase 1 ESA',            short:'Ph1 ESA'},
+  {id:2, label:'Phase 2 ESA',            short:'Ph2 ESA'},
+  {id:3, label:'Delineation / DSA',      short:'Delineation'},
+  {id:4, label:'Remediation',            short:'Remediation'},
+  {id:5, label:'Confirmatory Sampling',  short:'Confirm. Sampling'},
+  {id:6, label:'Surface Reclamation',    short:'Surface Recl.'},
+  {id:7, label:'Revegetation',           short:'Revegetation'},
+  {id:8, label:'RC Application',         short:'RC Application'},
+  {id:9, label:'RC Issued',              short:'RC Issued ✓'},
+];
+
+// ═══════════════════════════════════════════════════════════
+// LINE ITEMS — stage = milestone it belongs to; contingent = only if impacted
+// ═══════════════════════════════════════════════════════════
+const CATS = [
+  {key:'plan',    label:'Reclamation Planning / Eng.',        sup:'Rewild',                   pct:4.0,  stage:1, cont:false},
+  {key:'p1esa',   label:'Phase 1 ESA (Records & Site Visit)', sup:'Highwood Environmental',   pct:3.0,  stage:1, cont:false},
+  {key:'p2esa',   label:'Phase 2 ESA (Soil & Groundwater)',   sup:'Highwood Environmental',   pct:8.0,  stage:2, cont:false},
+  {key:'dsa',     label:'Detailed Site Assessment / Deline.', sup:'Highwood Environmental',   pct:6.0,  stage:3, cont:true },
+  {key:'gwmw',    label:'Groundwater Monitoring Wells',       sup:'Highwood Environmental',   pct:5.0,  stage:3, cont:true },
+  {key:'risk',    label:'Risk Assessment (Tier 1 / Tier 2)',  sup:'Rewild',                   pct:3.0,  stage:3, cont:true },
+  {key:'excav',   label:'Soil Excavation & Haul',             sup:'Innovative Well Abandonment',pct:14.0,stage:4, cont:true },
+  {key:'disposal',label:'Disposal & Tipping Fees',            sup:'Secure Energy Services',   pct:11.0, stage:4, cont:true },
+  {key:'salinity',label:'Salinity Remediation',               sup:'Highwood Environmental',   pct:9.0,  stage:4, cont:true },
+  {key:'insitu',  label:'In-Situ / Bioremediation',           sup:'Highwood Environmental',   pct:4.0,  stage:4, cont:true },
+  {key:'gwmon',   label:'Long-Term Groundwater Monitoring',   sup:'Highwood Environmental',   pct:4.0,  stage:5, cont:true },
+  {key:'confirm', label:'Confirmatory Sampling & Reporting',  sup:'Highwood Environmental',   pct:3.0,  stage:5, cont:false},
+  {key:'flowline',label:'Flowline & Buried Facility Removal', sup:'Innovative Well Abandonment',pct:6.0,stage:6, cont:false},
+  {key:'debris',  label:'Debris & Equipment Removal',         sup:'Innovative Well Abandonment',pct:3.0,stage:6, cont:false},
+  {key:'earth',   label:'Contouring & Topsoil Replacement',   sup:'Site Earthworks Ltd.',     pct:6.0,  stage:6, cont:false},
+  {key:'reveg',   label:'Revegetation & Seeding',             sup:'Site Earthworks Ltd.',     pct:3.0,  stage:7, cont:false},
+  {key:'weed',    label:'Weed Control & Maintenance',         sup:'Site Earthworks Ltd.',     pct:2.0,  stage:7, cont:false},
+  {key:'rcapp',   label:'Reclamation Certificate Application',sup:'Rewild',                   pct:2.0,  stage:8, cont:false},
+  {key:'carry',   label:'Surface Lease Rentals & Taxes',      sup:'— (Carrying Cost)',        pct:2.0,  stage:0, cont:false},
+  {key:'conting', label:'Contingency',                        sup:'—',                        pct:2.0,  stage:9, cont:false},
+];
+
+// ═══════════════════════════════════════════════════════════
+// SITE DATA — abandonment AFE carried from the abandonment dashboard
+// ═══════════════════════════════════════════════════════════
+const ABDN_AFE = {
+  '00/02-09-040-02W5/00':51200,'00/01-10-040-04W5/00':48700,'00/10-10-040-04W5/02':52400,
+  '00/10-10-040-04W5/03':47300,'00/10-34-039-03W5/00':53100,'02/04-01-040-04W5/00':49600,
+  '00/05-01-040-04W5/02':46800,'02/14-05-040-03W5/00':54200,'00/06-26-038-03W5/00':50800,
+  '00/12-35-038-03W5/00':45900,'00/06-08-038-02W5/00':51700,'00/12-14-038-03W5/00':48300,
+  '02/14-14-038-03W5/00':53800,'00/12-14-038-03W5/02':47600,'00/16-16-038-03W5/00':50100,
+  '00/14-23-038-03W5/00':52700,'02/08-06-039-03W5/00':46400,'02/06-13-039-04W5/00':55000,
+  '02/06-13-039-04W5/02':49200,'03/14-18-039-03W5/02':51900,'00/10-30-039-03W5/00':47100,
+  '03/14-18-039-03W5/00':53500,'00/05-25-039-04W5/00':48900,'00/03-20-038-03W5/00':45400,
+  '00/14-20-038-03W5/00':52100,'03/16-20-038-03W5/00':50600,'00/06-25-038-04W5/00':54700,
+  '02/02-25-038-04W5/00':47800,'02/14-29-038-03W5/00':51400,'02/02-25-038-04W5/02':49900,
+  '00/08-31-038-03W5/00':46100,'00/08-31-038-03W5/02':53300,'03/03-18-038-03W5/00':50400,
+  '03/03-18-038-03W5/02':48100,'02/03-20-038-03W5/00':52900,'00/11-15-038-04W5/02':45700,
+  '00/07-23-039-04W5/00':54500,'00/11-15-038-04W5/00':51100,
+};
+const UWIS = Object.keys(ABDN_AFE);
+
+// Site condition classes — drives contingent remediation cost
+const COND = {
+  CLEAN:    {label:'Clean — No Exceedance',     mult:1.00, cls:'c-clean', color:'var(--green)', findings:'Phase 2 ESA below Tier 1 guidelines. No remediation required.'},
+  MINOR:    {label:'Minor Hydrocarbon Impact',  mult:1.85, cls:'c-minor', color:'var(--amber)', findings:'Localised hydrocarbon exceedance near wellhead. Limited excavation scope.'},
+  SALINITY: {label:'Salinity Impact',           mult:3.40, cls:'c-major', color:'var(--red)',   findings:'Chloride and EC/SAR exceedances from historic produced-water release. Extended delineation and salinity remediation required.'},
+  MAJOR:    {label:'Major Impact — Multi-Media', mult:5.20, cls:'c-major', color:'var(--red)',  findings:'Soil and groundwater exceedances. Tier 2 risk assessment and long-term groundwater monitoring in place.'},
+};
+
+// Per-site: condition, current milestone (1-9), target RC year
+const SITE_CFG = {
+  '00/02-09-040-02W5/00':['CLEAN',9,2025],  '00/01-10-040-04W5/00':['CLEAN',8,2026],
+  '00/10-10-040-04W5/02':['MINOR',4,2027],  '00/10-10-040-04W5/03':['CLEAN',2,2028],
+  '00/10-34-039-03W5/00':['CLEAN',9,2025],  '02/04-01-040-04W5/00':['SALINITY',4,2029],
+  '00/05-01-040-04W5/02':['CLEAN',3,2027],  '02/14-05-040-03W5/00':['CLEAN',9,2025],
+  '00/06-26-038-03W5/00':['MINOR',5,2027],  '00/12-35-038-03W5/00':['CLEAN',1,2029],
+  '00/06-08-038-02W5/00':['CLEAN',9,2026],  '00/12-14-038-03W5/00':['MINOR',6,2026],
+  '02/14-14-038-03W5/00':['MAJOR',3,2030],  '00/12-14-038-03W5/02':['CLEAN',8,2026],
+  '00/16-16-038-03W5/00':['CLEAN',6,2027],  '00/14-23-038-03W5/00':['CLEAN',9,2025],
+  '02/08-06-039-03W5/00':['CLEAN',1,2029],  '02/06-13-039-04W5/00':['CLEAN',9,2026],
+  '02/06-13-039-04W5/02':['SALINITY',4,2029],'03/14-18-039-03W5/02':['CLEAN',2,2028],
+  '00/10-30-039-03W5/00':['CLEAN',7,2026],  '03/14-18-039-03W5/00':['CLEAN',8,2026],
+  '00/05-25-039-04W5/00':['MINOR',2,2028],  '00/03-20-038-03W5/00':['CLEAN',9,2025],
+  '00/14-20-038-03W5/00':['CLEAN',1,2029],  '03/16-20-038-03W5/00':['CLEAN',9,2026],
+  '00/06-25-038-04W5/00':['MAJOR',4,2030],  '02/02-25-038-04W5/00':['CLEAN',5,2027],
+  '02/14-29-038-03W5/00':['MINOR',3,2028],  '02/02-25-038-04W5/02':['CLEAN',7,2026],
+  '00/08-31-038-03W5/00':['CLEAN',6,2027],  '00/08-31-038-03W5/02':['SALINITY',3,2030],
+  '03/03-18-038-03W5/00':['CLEAN',9,2026],  '03/03-18-038-03W5/02':['MINOR',5,2027],
+  '02/03-20-038-03W5/00':['CLEAN',4,2028],  '00/11-15-038-04W5/02':['CLEAN',9,2025],
+  '00/07-23-039-04W5/00':['CLEAN',8,2026],  '00/11-15-038-04W5/00':['CLEAN',2,2029],
+};
+
+const BASE_RECL = 42000;      // clean-site baseline reclamation cost
+const CARRY_PER_YEAR = 4800;  // surface lease rental + taxes + inspections per site per year
+
+function H(s,o=0){let h=o+1;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i);return h>>>0;}
+function R(seed,lo,hi){let x=Math.sin(seed+1)*93176.4837;x-=Math.floor(x);return lo+x*(hi-lo);}
+
+function buildSite(uwi){
+  const [condKey,ms,rcYear]=SITE_CFG[uwi];
+  const cond=COND[condKey];
+  const h=H(uwi,7);
+  // Reclamation AFE scales with site condition, with per-site variation
+  const afe=Math.round(BASE_RECL*cond.mult*R(h,0.90,1.12)/100)*100;
+
+  const cats=CATS.map((c,i)=>{
+    const ns=H(uwi,i*19+400);
+    // Contingent items are zeroed on clean sites
+    const triggered = !c.cont || condKey!=='CLEAN';
+    let catAFE = triggered ? Math.round(afe*c.pct/100*R(ns,0.92,1.10)) : 0;
+    if(c.key==='carry') catAFE=Math.round(CARRY_PER_YEAR*(rcYear-2025+1));
+
+    let actual=0,committed=0;
+    if(catAFE>0){
+      if(c.stage===0){ // carrying cost accrues over elapsed years
+        const yrs=Math.max(0,2026-2025);
+        actual=Math.round(CARRY_PER_YEAR*(yrs+1)*R(ns+1,0.95,1.05));
+        actual=Math.min(actual,catAFE);
+        committed=actual;
+      } else if(ms>c.stage){
+        actual=Math.round(catAFE*R(ns+2,0.90,1.06));
+        committed=actual;
+      } else if(ms===c.stage){
+        actual=Math.round(catAFE*R(ns+3,0.35,0.78));
+        committed=Math.min(Math.round(actual*R(ns+4,1.08,1.30)),catAFE);
+      }
+    }
+    let forecast=catAFE;
+    if(catAFE>0){
+      if(ms>c.stage||c.stage===0) forecast=Math.max(actual,Math.round(catAFE*R(ns+5,0.92,1.05)));
+      else if(R(ns+6,0,1)>0.82) forecast=Math.round(catAFE*R(ns+7,1.05,1.18));
+      else forecast=Math.round(catAFE*R(ns+8,0.93,1.03));
+    }
+    return {...c, supplier:c.sup, afe:catAFE, actual, committed, forecast, triggered};
+  });
+
+  const totalAFE=cats.reduce((a,c)=>a+c.afe,0);
+  return {
+    uwi, condKey, cond, ms, rcYear,
+    abdn: ABDN_AFE[uwi],
+    afe: totalAFE,
+    cats,
+    actual:    cats.reduce((a,c)=>a+c.actual,0),
+    committed: cats.reduce((a,c)=>a+c.committed,0),
+    forecast:  cats.reduce((a,c)=>a+c.forecast,0),
+    carry:     CARRY_PER_YEAR*(rcYear-2025+1),
+  };
+}
+
+const cache={};
+const getSite=u=>cache[u]||(cache[u]=buildSite(u));
+const allSites=()=>UWIS.map(getSite);
+
+function getRollup(){
+  const sites=allSites();
+  const cats=CATS.map((c,i)=>({...c, supplier:c.sup,
+    afe:sites.reduce((a,s)=>a+s.cats[i].afe,0),
+    actual:sites.reduce((a,s)=>a+s.cats[i].actual,0),
+    committed:sites.reduce((a,s)=>a+s.cats[i].committed,0),
+    forecast:sites.reduce((a,s)=>a+s.cats[i].forecast,0),
+    triggered:true}));
+  return {uwi:'ALL', cats, sites,
+    abdn:sites.reduce((a,s)=>a+s.abdn,0),
+    afe:sites.reduce((a,s)=>a+s.afe,0),
+    actual:sites.reduce((a,s)=>a+s.actual,0),
+    committed:sites.reduce((a,s)=>a+s.committed,0),
+    forecast:sites.reduce((a,s)=>a+s.forecast,0),
+    carry:sites.reduce((a,s)=>a+s.carry,0)};
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+const fmt=n=>'$'+(n/1000).toFixed(1)+'K';
+const fmtM=n=>n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+'K';
+const fmtFull=n=>'$'+Math.round(n).toLocaleString();
+const pctS=(a,b)=>b?((a/b)*100).toFixed(1)+'%':'0%';
+
+let cMain=null,cDonut=null,cFunnel=null,c2=null;
+
+// Dropdown
+const sel=document.getElementById('siteSelect');
+UWIS.forEach(u=>{
+  const s=getSite(u);
+  const o=document.createElement('option');
+  o.value=u;
+  o.textContent=`${u}  |  Recl. AFE $${s.afe.toLocaleString()}`;
+  sel.appendChild(o);
+});
+
+// ═══════════════════════════════════════════════════════════
+// LIABILITY BANNER (always program-wide)
+// ═══════════════════════════════════════════════════════════
+function renderLiability(){
+  const r=getRollup();
+  const sites=r.sites;
+  const totalLiability=r.abdn+r.forecast;              // ARO = abandonment + reclamation
+  const certified=sites.filter(s=>s.ms>=9);
+  const retired=certified.reduce((a,s)=>a+s.abdn+s.forecast,0);
+  const pctRetired=retired/totalLiability*100;
+  const pending=sites.filter(s=>s.ms<9);
+  const annualCarry=pending.length*CARRY_PER_YEAR;
+
+  document.getElementById('lgTotal').textContent=fmtM(totalLiability);
+  document.getElementById('lgRetired').textContent=fmtM(retired);
+  document.getElementById('lgRetiredSub').textContent=pctRetired.toFixed(1)+'% of total ARO retired';
+  document.getElementById('lgRC').textContent=certified.length+' / 38';
+  document.getElementById('lgRCSub').textContent=pending.length+' sites still carrying liability';
+  document.getElementById('lgQual').textContent=fmtM(r.actual);
+  document.getElementById('lgCarry').textContent=fmtM(annualCarry);
+  document.getElementById('lgCarrySub').textContent=pending.length+' uncertified sites × '+fmtFull(CARRY_PER_YEAR)+'/yr';
+
+  const pill=document.getElementById('liabPill');
+  if(pctRetired>=40){pill.textContent='✓ RETIREMENT ON TRACK';pill.style.cssText='background:rgba(95,214,138,.25);color:#8CE6AA;border:1px solid rgba(140,230,170,.5);';}
+  else if(pctRetired>=20){pill.textContent='⚠ RETIREMENT LAGGING';pill.style.cssText='background:rgba(212,129,26,.25);color:#F0CE8A;border:1px solid rgba(240,206,138,.5);';}
+  else{pill.textContent='▲ LIABILITY ACCUMULATING';pill.style.cssText='background:rgba(192,57,43,.3);color:#F2A089;border:1px solid rgba(242,160,137,.5);';}
+
+  // Bar: certified sites, plus in-progress shading
+  const inProg=sites.filter(s=>s.ms>=6&&s.ms<9).length;
+  document.getElementById('liabFill').style.width=(certified.length/38*100)+'%';
+  document.getElementById('liabFill').textContent=certified.length+' certified';
+  document.getElementById('liabProgress').style.width=((certified.length+inProg)/38*100)+'%';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+function onChange(){const v=sel.value;render(v==='ALL'?getRollup():getSite(v));}
+
+function render(d){
+  const isAll=d.uwi==='ALL';
+  document.getElementById('topBadge').textContent=isAll?'🌱 Program Rollup — 38 Sites':'📍 '+d.uwi;
+  document.getElementById('funnelCard').style.display=isAll?'block':'none';
+  document.getElementById('registerCard').style.display=isAll?'block':'none';
+  document.getElementById('msSection').style.display=isAll?'none':'block';
+  infoBar(d,isAll); condStrip(d,isAll); msTracker(d,isAll);
+  statCards(d,isAll); charts(d,isAll); table(d,isAll); alerts(d,isAll);
+  if(isAll){funnel(d); register(d);}
+}
+
+function infoBar(d,isAll){
+  const el=document.getElementById('infoBar');
+  const I=(l,v,c)=>`<div class="ii"><span class="ii-l">${l}</span><span class="ii-v"${c?` style="color:${c};"`:''}>${v}</span></div>`;
+  const D='<div class="ii-d"></div>';
+  if(isAll){
+    const certified=d.sites.filter(s=>s.ms>=9).length;
+    const impacted=d.sites.filter(s=>s.condKey!=='CLEAN').length;
+    el.innerHTML=I('Operator','Whitecap Resources Inc.')+D+I('Environmental Consultant','Highwood Environmental')+D+
+      I('Reclamation Engineering','Rewild')+D+I('Program Sites','38 Sites')+D+
+      I('Impacted Sites',impacted+' of 38','var(--amber)')+D+
+      I('RC Issued',certified+' of 38','var(--green)')+D+
+      I('Program Window','2025 – 2030','var(--blue)')+D+I('Status','⚙ Multi-Year Active','var(--gold)');
+  }else{
+    el.innerHTML=I('Operator','Whitecap Resources Inc.')+D+I('Environmental Consultant','Highwood Environmental')+D+
+      I('Site Condition',d.cond.label,d.cond.color)+D+
+      I('Current Milestone',MILESTONES[d.ms-1]?MILESTONES[d.ms-1].label:'Not Started','var(--gold)')+D+
+      I('Recl. AFE',fmtFull(d.afe))+D+I('Target RC Year',d.rcYear,'var(--blue)')+D+
+      I('Years to Certification',(d.rcYear-2026)+' yrs remaining')+D+
+      I('RC Status',d.ms>=9?'✅ Certificate Issued':d.ms>=8?'⏳ Application Filed':'○ Not Yet Applied');
+  }
+}
+
+function condStrip(d,isAll){
+  const P=(cls,dot,txt)=>`<div class="cpill ${cls}"><div class="cdot" style="background:${dot};"></div>${txt}</div>`;
+  if(isAll){
+    const s=d.sites;
+    const c=k=>s.filter(x=>x.condKey===k).length;
+    document.getElementById('condTitle').textContent='🧪 Site Condition Distribution — Program-Wide Environmental Findings';
+    document.getElementById('condItems').innerHTML=
+      P('c-clean','var(--green)',`Clean — No Exceedance (${c('CLEAN')} sites)`)+
+      P('c-minor','var(--amber)',`Minor Hydrocarbon Impact (${c('MINOR')} sites)`)+
+      P('c-major','var(--red)',`Salinity Impact (${c('SALINITY')} sites)`)+
+      P('c-major','var(--red)',`Major Multi-Media Impact (${c('MAJOR')} sites)`)+
+      P('c-info','var(--blue)',`Phase 2 ESA Complete (${s.filter(x=>x.ms>=3).length} sites)`)+
+      P('c-info','var(--blue)',`Remediation Complete (${s.filter(x=>x.ms>=5).length} sites)`);
+  }else{
+    const ms=d.ms;
+    document.getElementById('condTitle').textContent='🧪 Site Condition & Environmental Findings — '+d.uwi;
+    let html=P(d.cond.cls,d.cond.color,d.cond.label);
+    html+=P(ms>=1?'c-clean':'c-info',ms>=1?'var(--green)':'var(--blue)','Phase 1 ESA '+(ms>=1?'Complete':'Pending'));
+    html+=P(ms>=2?'c-clean':'c-info',ms>=2?'var(--green)':'var(--blue)','Phase 2 ESA '+(ms>=2?'Complete':'Pending'));
+    if(d.condKey==='CLEAN'){
+      html+=P('c-clean','var(--green)','No Remediation Required');
+    }else{
+      html+=P(ms>=3?'c-clean':'c-minor',ms>=3?'var(--green)':'var(--amber)','Delineation '+(ms>=3?'Complete':'In Progress'));
+      html+=P(ms>=5?'c-clean':'c-major',ms>=5?'var(--green)':'var(--red)','Remediation '+(ms>=5?'Complete':'Outstanding'));
+      if(d.condKey==='MAJOR'||d.condKey==='SALINITY') html+=P('c-info','var(--blue)','Long-Term GW Monitoring Active');
+    }
+    html+=P(ms>=9?'c-clean':'c-info',ms>=9?'var(--green)':'var(--blue)','Reclamation Certificate '+(ms>=9?'Issued':'Outstanding'));
+    document.getElementById('condItems').innerHTML=html+
+      `<div style="flex-basis:100%;font-size:10.5px;color:#666;margin-top:6px;line-height:1.5;"><strong>Findings:</strong> ${d.cond.findings}</div>`;
+  }
+}
+
+function msTracker(d,isAll){
+  if(isAll)return;
+  const t=document.getElementById('msTrack');t.innerHTML='';
+  const startYr=2025;
+  MILESTONES.forEach(m=>{
+    let cls,note;
+    // Clean sites skip remediation-specific milestones
+    const skipped = d.condKey==='CLEAN' && (m.id===3||m.id===4);
+    if(skipped){cls='ms-skip';note='Not required';}
+    else if(d.ms>m.id){cls='ms-done';note='✓ '+(startYr+Math.floor((m.id-1)/2.2));}
+    else if(d.ms===m.id){cls='ms-active';note='← CURRENT';}
+    else {cls='ms-pend';note='Est. '+Math.min(d.rcYear,startYr+Math.floor((m.id-1)/1.8));}
+    t.innerHTML+=`<div class="ms-seg ${cls}">${m.short}<span class="ms-date">${note}</span></div>`;
+  });
+}
+
+function statCards(d,isAll){
+  const vr=d.forecast-d.afe;
+  document.getElementById('statLabel').textContent=isAll
+    ?'Key Cost Metrics — Reclamation Program Rollup (38 Sites)'
+    :'Key Cost Metrics — '+d.uwi;
+  const g=document.getElementById('statGrid');
+  const totalClosure=d.abdn+d.forecast;
+  const card5=isAll
+    ?`<div class="stat-card" style="border-color:var(--purple);"><div class="sc-l">Total Closure Cost</div><div class="sc-v" style="color:var(--purple);">${fmtM(totalClosure)}</div><div class="sc-s">Abandonment + reclamation</div><div class="sc-b" style="background:var(--ltpurple);color:var(--purple);">${fmtM(d.abdn)} abdn + ${fmtM(d.forecast)} recl</div></div>`
+    :`<div class="stat-card" style="border-color:var(--purple);"><div class="sc-l">Total Closure Cost</div><div class="sc-v" style="color:var(--purple);">${fmt(totalClosure)}</div><div class="sc-s">Abandonment + reclamation</div><div class="sc-b" style="background:var(--ltpurple);color:var(--purple);">${fmt(d.abdn)} abdn + ${fmt(d.forecast)} recl</div></div>`;
+  g.innerHTML=`
+    <div class="stat-card" style="border-color:var(--blue);"><div class="sc-l">Reclamation AFE</div><div class="sc-v">${fmtM(d.afe)}</div><div class="sc-s">${isAll?'38 sites, condition-adjusted':'Condition: '+d.cond.label.split(' —')[0]}</div></div>
+    <div class="stat-card" style="border-color:var(--green);"><div class="sc-l">Actual Spend to Date</div><div class="sc-v" style="color:var(--green);">${fmtM(d.actual)}</div><div class="sc-s">${pctS(d.actual,d.afe)} of AFE used</div><div class="sc-b" style="background:var(--ltgrn);color:var(--green);">✓ Qualifying closure spend</div></div>
+    <div class="stat-card" style="border-color:var(--gold);"><div class="sc-l">Committed</div><div class="sc-v" style="color:var(--amber);">${fmtM(d.committed)}</div><div class="sc-s">Approved, not yet invoiced</div><div class="sc-b" style="background:var(--ltamb);color:var(--amber);">${pctS(d.committed,d.afe)} of AFE</div></div>
+    <div class="stat-card" style="border-color:${vr>0?'var(--red)':'var(--green)'};"><div class="sc-l">Forecast Final Cost</div><div class="sc-v" style="color:${vr>0?'var(--red)':'var(--green)'};">${fmtM(d.forecast)}</div><div class="sc-s">${vr>=0?'+':''}${fmtM(vr)} vs. AFE</div><div class="sc-b" style="background:${vr>0?'var(--ltred)':'var(--ltgrn)'};color:${vr>0?'var(--red)':'var(--green)'};">${vr>=0?'▲':'▼'} ${Math.abs(vr/d.afe*100).toFixed(1)}% Variance</div></div>
+    ${card5}`;
+}
+
+function charts(d,isAll){
+  // MAIN — multi-year spend profile
+  const years=[2025,2026,2027,2028,2029,2030];
+  let actualByYear,forecastByYear;
+  if(isAll){
+    actualByYear=years.map(y=>d.sites.filter(s=>s.rcYear<=y).reduce((a,s)=>a+(s.rcYear<=2026?s.actual:0),0));
+    // Distribute: actual up to 2026, forecast spread by target RC year
+    actualByYear=years.map(y=>y<=2026?d.sites.reduce((a,s)=>a+s.actual*(y===2025?0.45:0.55),0):null);
+    forecastByYear=years.map(y=>{
+      if(y<2026)return null;
+      const due=d.sites.filter(s=>s.rcYear===y);
+      const base=due.reduce((a,s)=>a+(s.forecast-s.actual),0);
+      return y===2026?d.sites.reduce((a,s)=>a+s.actual,0)*0.55+base:base;
+    });
+    document.getElementById('chT').textContent='Multi-Year Reclamation Spend Profile — 2025 to 2030';
+    document.getElementById('chS').textContent='Actual spend (2025–26) and forecast remaining spend by target Reclamation Certificate year';
+  }else{
+    const span=d.rcYear-2025+1;
+    actualByYear=years.map(y=>y<=2026?d.actual*(y===2025?0.4:0.6):null);
+    forecastByYear=years.map(y=>{
+      if(y<2026||y>d.rcYear)return null;
+      const rem=d.forecast-d.actual;
+      const yrsLeft=d.rcYear-2026+1;
+      return y===2026?d.actual*0.6+rem/yrsLeft:rem/yrsLeft;
+    });
+    document.getElementById('chT').textContent='Reclamation Spend Profile — '+d.uwi;
+    document.getElementById('chS').textContent='Actual and forecast spend by year through target RC year '+d.rcYear;
+  }
+  if(cMain)cMain.destroy();
+  cMain=new Chart(document.getElementById('mainChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:years.map(String),datasets:[
+      {label:'Actual Spend',data:actualByYear,backgroundColor:'rgba(30,122,63,.78)',borderRadius:4},
+      {label:'Forecast Spend',data:forecastByYear,backgroundColor:'rgba(201,168,76,.6)',borderRadius:4,borderColor:'rgba(201,168,76,.95)',borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{font:{size:9},boxWidth:10}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmtFull(c.raw||0)}}},
+      scales:{x:{ticks:{font:{size:10},color:'#8896A6'},grid:{display:false},stacked:true},
+              y:{ticks:{font:{size:9},color:'#8896A6',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#EDF0F4'},stacked:true}}}
+  });
+
+  // MINI METRICS
+  if(isAll){
+    const impacted=d.sites.filter(s=>s.condKey!=='CLEAN');
+    const impactedCost=impacted.reduce((a,s)=>a+s.forecast,0);
+    document.getElementById('mini').innerHTML=`
+      <div class="mm"><div class="mm-v">${impacted.length}</div><div class="mm-l">Impacted Sites</div><div class="mm-x" style="color:var(--amber);">${(impacted.length/38*100).toFixed(0)}% of program</div></div>
+      <div class="mm"><div class="mm-v" style="color:var(--red);">${(impactedCost/d.forecast*100).toFixed(0)}%</div><div class="mm-l">Cost Concentration</div><div class="mm-x" style="color:#8896A6;">in impacted sites</div></div>
+      <div class="mm"><div class="mm-v">${fmtM(d.forecast/38)}</div><div class="mm-l">Avg Cost / Site</div></div>
+      <div class="mm"><div class="mm-v">${fmtM(d.carry)}</div><div class="mm-l">Lifetime Carrying Cost</div><div class="mm-x" style="color:var(--amber);">to certification</div></div>`;
+  }else{
+    document.getElementById('mini').innerHTML=`
+      <div class="mm"><div class="mm-v">${d.ms} / 9</div><div class="mm-l">Milestones Complete</div></div>
+      <div class="mm"><div class="mm-v">${pctS(d.actual,d.afe)}</div><div class="mm-l">AFE Used</div></div>
+      <div class="mm"><div class="mm-v">${d.cats.filter(c=>c.afe>0).length}</div><div class="mm-l">Active Line Items</div><div class="mm-x" style="color:#8896A6;">of ${CATS.length}</div></div>
+      <div class="mm"><div class="mm-v">${fmt(d.carry)}</div><div class="mm-l">Carrying Cost</div><div class="mm-x" style="color:var(--amber);">to ${d.rcYear}</div></div>`;
+  }
+
+  // DONUT
+  const cats=d.cats.filter(c=>c.actual>0);
+  const colors=['#16324F','#2E75B6','#1E7A3F','#C9A84C','#176B6B','#6B4423','#5B3E8E','#D4811A','#C0392B','#2E8B8B','#3A7CA5','#8B6B3A','#4A7A2E','#8896A6','#A0522D','#556B2F','#6A5ACD','#20B2AA','#B8860B','#708090'];
+  if(cDonut)cDonut.destroy();
+  cDonut=new Chart(document.getElementById('donutChart').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:cats.map(c=>c.label),datasets:[{data:cats.map(c=>c.actual),backgroundColor:colors.slice(0,cats.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'56%',
+      plugins:{legend:{position:'right',labels:{font:{size:8},boxWidth:9,padding:4}},
+        tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' ('+((c.raw/d.actual)*100).toFixed(1)+'%)'}}}}
+  });
+  document.getElementById('donutS').textContent=isAll
+    ?'Total actual spend — '+fmtFull(d.actual)+' across 38 sites'
+    :'Actual spend to date — '+fmtFull(d.actual);
+
+  // CHART 2 — liability retirement curve / site cost breakdown
+  chart2(d,isAll);
+}
+
+function chart2(d,isAll){
+  const years=[2025,2026,2027,2028,2029,2030];
+  if(isAll){
+    const total=d.abdn+d.forecast;
+    let cum=0;
+    const retired=years.map(y=>{
+      cum=d.sites.filter(s=>s.rcYear<=y).reduce((a,s)=>a+s.abdn+s.forecast,0);
+      return cum;
+    });
+    const rcCount=years.map(y=>d.sites.filter(s=>s.rcYear<=y).length);
+    document.getElementById('ch2T').textContent='Liability Retirement Curve';
+    document.getElementById('ch2S').textContent='Cumulative ARO retired and Reclamation Certificates issued, 2025–2030';
+    if(c2)c2.destroy();
+    c2=new Chart(document.getElementById('chart2').getContext('2d'),{
+      type:'line',
+      data:{labels:years.map(String),datasets:[
+        {label:'Cumulative ARO Retired ($)',data:retired,borderColor:'#1E7A3F',backgroundColor:'rgba(30,122,63,.10)',borderWidth:2.5,pointRadius:3,fill:true,tension:.3,yAxisID:'y'},
+        {label:'Total ARO',data:years.map(()=>total),borderColor:'#CCD3DC',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false,yAxisID:'y'},
+        {label:'RCs Issued (count)',data:rcCount,borderColor:'#C9A84C',borderWidth:2,borderDash:[4,3],pointRadius:3,fill:false,tension:.3,yAxisID:'y1'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{labels:{font:{size:9},boxWidth:10}}},
+        scales:{
+          x:{ticks:{font:{size:10},color:'#8896A6'},grid:{display:false}},
+          y:{position:'left',ticks:{font:{size:9},color:'#8896A6',callback:v=>'$'+(v/1000000).toFixed(1)+'M'},grid:{color:'#EDF0F4'}},
+          y1:{position:'right',min:0,max:38,ticks:{font:{size:9},color:'#C9A84C',stepSize:10},grid:{display:false},title:{display:true,text:'RCs',font:{size:9},color:'#C9A84C'}}
+        },interaction:{mode:'index',intersect:false}}
+    });
+  }else{
+    // Single site — AFE vs actual vs forecast by line item
+    const cats=d.cats.filter(c=>c.afe>0);
+    document.getElementById('ch2T').textContent='AFE vs. Actual by Line Item';
+    document.getElementById('ch2S').textContent='Line-item budget performance — '+d.uwi;
+    if(c2)c2.destroy();
+    c2=new Chart(document.getElementById('chart2').getContext('2d'),{
+      type:'bar',
+      data:{labels:cats.map(c=>c.label.length>26?c.label.slice(0,24)+'…':c.label),datasets:[
+        {label:'AFE',data:cats.map(c=>c.afe),backgroundColor:'rgba(22,50,79,.20)',borderColor:'#16324F',borderWidth:1,borderRadius:2},
+        {label:'Actual',data:cats.map(c=>c.actual),backgroundColor:cats.map(c=>c.actual>c.afe?'rgba(192,57,43,.75)':'rgba(30,122,63,.75)'),borderRadius:3},
+      ]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{labels:{font:{size:9},boxWidth:10}}},
+        scales:{x:{ticks:{font:{size:8},color:'#8896A6',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#EDF0F4'}},
+                y:{ticks:{font:{size:8},color:'#8896A6'},grid:{display:false}}}}
+    });
+  }
+}
+
+function funnel(d){
+  const counts=MILESTONES.map(m=>d.sites.filter(s=>s.ms===m.id).length);
+  const colors=['#8896A6','#7C90A6','#5B8AAE','#D4811A','#2E75B6','#3A7CA5','#2E8B57','#C9A84C','#1E7A3F'];
+  if(cFunnel)cFunnel.destroy();
+  cFunnel=new Chart(document.getElementById('funnelChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:MILESTONES.map(m=>m.short),datasets:[{label:'Sites at this stage',data:counts,backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+' site'+(c.raw===1?'':'s')}}},
+      scales:{x:{ticks:{font:{size:9},color:'#8896A6'},grid:{display:false}},
+              y:{ticks:{font:{size:9},color:'#8896A6',stepSize:2},grid:{color:'#EDF0F4'}}}}
+  });
+}
+
+function table(d,isAll){
+  document.getElementById('tblTitle').textContent=isAll
+    ?'Reclamation AFE Line Item Performance — Program Rollup (38 Sites)'
+    :'Reclamation AFE Line Item Performance — '+d.uwi;
+  const tb=document.getElementById('tblBody'),tf=document.getElementById('tblFoot');
+  tb.innerHTML='';tf.innerHTML='';
+  let A=0,Ac=0,C=0,F=0;
+  d.cats.forEach(r=>{
+    A+=r.afe;Ac+=r.actual;C+=r.committed;F+=r.forecast;
+    const notTrig=r.afe===0;
+    const v=r.forecast-r.afe;
+    const p=r.afe>0?(r.actual/r.afe*100):0;
+    const ov=v>0&&!notTrig,wa=!ov&&!notTrig&&p>78;
+    const st=notTrig?'◇ Not Triggered':ov?'▲ Over AFE':wa?'⚠ Watch':'✓ On Budget';
+    const sc=notTrig?'#2E75B6':ov?'#C0392B':wa?'#D4811A':'#1E7A3F';
+    const sb=notTrig?'#E8F1F8':ov?'#FBEBE9':wa?'#FCF2E3':'#E9F5EE';
+    const stageLbl=r.stage===0?'Ongoing':MILESTONES[r.stage-1]?MILESTONES[r.stage-1].short:'—';
+    tb.innerHTML+=`<tr${notTrig?' style="opacity:.55;"':''}>
+      <td>${r.label}${r.cont?' <span style="font-size:9px;color:#8896A6;font-weight:400;">(contingent)</span>':''}</td>
+      <td style="text-align:left;color:#666;font-size:11px;font-weight:400;">${r.supplier}</td>
+      <td style="text-align:left;"><span class="stage-tag">${stageLbl}</span></td>
+      <td>${notTrig?'—':fmt(r.afe)}</td><td>${notTrig?'—':fmt(r.actual)}</td><td>${notTrig?'—':fmt(r.committed)}</td>
+      <td style="color:${ov?'#C0392B':'inherit'};font-weight:${ov?700:400};">${notTrig?'—':fmt(r.forecast)}</td>
+      <td style="color:${ov?'#C0392B':'#1E7A3F'};font-weight:700;">${notTrig?'—':(v>=0?'+':'')+fmt(v)}</td>
+      <td>${notTrig?'<span style="color:#A9B4C0;font-size:10px;">n/a</span>':`<div class="vbar-w"><div class="vbar-bg"><div class="vbar-f" style="width:${Math.min(p,100)}%;background:${sc};"></div></div><span class="vpct" style="color:${sc};">${p.toFixed(0)}%</span></div>`}</td>
+      <td><span class="pill" style="background:${sb};color:${sc};">${st}</span></td></tr>`;
+  });
+  const vt=F-A;
+  tf.innerHTML=`<tr><td>TOTAL RECLAMATION COST</td><td></td><td></td>
+    <td>${fmt(A)}</td><td>${fmt(Ac)}</td><td>${fmt(C)}</td><td>${fmt(F)}</td>
+    <td style="color:${vt>0?'#F4A26A':'#4AE080'};">${vt>=0?'+':''}${fmt(vt)}</td>
+    <td colspan="2">${(Ac/A*100).toFixed(1)}% of AFE used</td></tr>`;
+}
+
+function register(d){
+  const tb=document.getElementById('regBody'),tf=document.getElementById('regFoot');
+  tb.innerHTML='';
+  d.sites.forEach(s=>{
+    const total=s.abdn+s.forecast;
+    const done=s.ms>=9;
+    const msLbl=MILESTONES[s.ms-1]?MILESTONES[s.ms-1].label:'Not Started';
+    tb.innerHTML+=`<tr>
+      <td style="font-family:'Consolas',monospace;font-size:11.5px;">${s.uwi}</td>
+      <td style="text-align:left;"><span class="pill" style="background:${s.condKey==='CLEAN'?'var(--ltgrn)':s.condKey==='MINOR'?'var(--ltamb)':'var(--ltred)'};color:${s.cond.color};">${s.cond.label.split(' —')[0]}</span></td>
+      <td style="text-align:left;font-size:11px;color:#555;">${msLbl}</td>
+      <td>${fmt(s.abdn)}</td><td>${fmt(s.afe)}</td><td>${fmt(s.actual)}</td>
+      <td style="font-weight:800;color:var(--purple);">${fmt(total)}</td>
+      <td>${s.rcYear}</td>
+      <td><span class="pill" style="background:${done?'var(--ltgrn)':'var(--ltblue)'};color:${done?'var(--green)':'var(--blue)'};">${done?'✅ RC Issued':'○ '+s.ms+'/9'}</span></td></tr>`;
+  });
+  const tAb=d.sites.reduce((a,s)=>a+s.abdn,0);
+  tf.innerHTML=`<tr><td>TOTAL — 38 SITES</td><td></td><td></td>
+    <td>${fmtM(tAb)}</td><td>${fmtM(d.afe)}</td><td>${fmtM(d.actual)}</td>
+    <td>${fmtM(tAb+d.forecast)}</td><td></td>
+    <td>${d.sites.filter(s=>s.ms>=9).length} certified</td></tr>`;
+}
+
+function alerts(d,isAll){
+  const c=document.getElementById('alerts');c.innerHTML='';
+  const A=(t,title,body)=>{
+    const m={red:['var(--ltred)','var(--red)','🔴'],amber:['var(--ltamb)','var(--amber)','🟡'],
+             blue:['var(--ltteal)','var(--teal)','🔵'],green:['var(--ltgrn)','var(--green)','🟢'],
+             purple:['var(--ltpurple)','var(--purple)','🟣']}[t];
+    c.innerHTML+=`<div class="alert" style="background:${m[0]};border-left:3px solid ${m[1]};"><div class="a-i">${m[2]}</div><div><div class="a-t" style="color:${m[1]};">${title}</div><div class="a-b">${body}</div></div></div>`;
+  };
+  if(isAll){
+    const impacted=d.sites.filter(s=>s.condKey!=='CLEAN');
+    const impactedCost=impacted.reduce((a,s)=>a+s.forecast,0);
+    const pending=d.sites.filter(s=>s.ms<9);
+    const rcReady=d.sites.filter(s=>s.ms===8);
+    const stalled=d.sites.filter(s=>s.ms<=2&&s.rcYear>=2029);
+    A('purple','Cost Concentration Risk — '+impacted.length+' Sites Drive '+(impactedCost/d.forecast*100).toFixed(0)+'% of Program Cost',
+      `${impacted.length} of 38 sites carry environmental exceedances and account for ${fmtM(impactedCost)} of ${fmtM(d.forecast)} total forecast reclamation cost. The ${d.sites.filter(s=>s.condKey==='MAJOR').length} major-impact and ${d.sites.filter(s=>s.condKey==='SALINITY').length} salinity sites are the primary budget exposure — recommend Tier 2 risk assessment review with Rewild before committing further excavation scope.`);
+    A('amber','Carrying Cost Burn — '+fmtM(pending.length*CARRY_PER_YEAR)+'/yr on '+pending.length+' Uncertified Sites',
+      `Surface lease rentals, municipal taxes and inspection costs accrue on every site until the Reclamation Certificate is issued. Total lifetime carrying cost to certification is ${fmtM(d.carry)}. Accelerating the ${rcReady.length} sites at RC Application stage would remove ${fmtM(rcReady.length*CARRY_PER_YEAR)}/yr from the burn.`);
+    if(rcReady.length) A('green',rcReady.length+' Sites at RC Application — Near-Term Liability Retirement',
+      `${rcReady.length} sites have applications filed with the AER and are pending certificate issuance. Approval retires ${fmtM(rcReady.reduce((a,s)=>a+s.abdn+s.forecast,0))} of ARO from the balance sheet. Rewild to monitor AER response timelines.`);
+    if(stalled.length) A('red',stalled.length+' Sites Stalled at Early Assessment with Late RC Targets',
+      `Sites still at Phase 1/Phase 2 ESA but targeting Reclamation Certificates in 2029–2030. Long assessment gaps extend carrying costs and delay quota-qualifying spend. Recommend Highwood Environmental accelerate Phase 2 scheduling to pull certification forward.`);
+    A('blue','Reclamation Spend Qualifies Toward AER Closure Quota',
+      `${fmtM(d.actual)} of reclamation and remediation spend to date counts toward the mandatory closure spend quota under Manual 023, alongside downhole abandonment spend. Combined with the abandonment program, this materially improves quota position — review the Abandonment Dashboard quota tracker for the consolidated figure.`);
+  }else{
+    const over=d.cats.filter(x=>x.forecast>x.afe&&x.afe>0);
+    if(d.condKey!=='CLEAN'){
+      A('red','Environmental Exceedance — '+d.cond.label,d.cond.findings+` Contingent remediation line items are active on this site, driving reclamation AFE to ${fmtFull(d.afe)} versus a clean-site baseline of approximately ${fmtFull(BASE_RECL)}.`);
+    }else{
+      A('green','Clean Site — No Remediation Required',`Phase 2 ESA results below Tier 1 guidelines. Delineation, excavation, disposal and salinity remediation line items are not triggered. Site proceeds directly to surface reclamation and certification.`);
+    }
+    over.forEach(x=>A('red',x.label+' — Trending Over AFE',`${x.supplier}: Forecast ${fmt(x.forecast)} vs. AFE ${fmt(x.afe)} (+${fmt(x.forecast-x.afe)}). May require AFE supplement.`));
+    A('amber','Carrying Cost Accruing — '+fmtFull(CARRY_PER_YEAR)+'/yr Until Certification',
+      `Surface lease rental, municipal taxes and inspections continue until the Reclamation Certificate is issued. Target RC year is ${d.rcYear}, implying ${fmtFull(d.carry)} total carrying cost. Each year of delay adds ${fmtFull(CARRY_PER_YEAR)}.`);
+    if(d.ms>=9) A('green','Reclamation Certificate Issued — Liability Retired',`AER Reclamation Certificate issued. ${fmtFull(d.abdn+d.forecast)} of ARO removed from the inactive liability inventory. Carrying costs have ceased.`);
+    else if(d.ms===8) A('blue','RC Application Filed — Awaiting AER Decision',`Reclamation Certificate application submitted by Rewild. Issuance will retire ${fmtFull(d.abdn+d.forecast)} of ARO. Monitor AER response and be prepared for a Reclamation Certificate audit request.`);
+    else A('blue','Next Milestone: '+(MILESTONES[d.ms]?MILESTONES[d.ms].label:'Certification'),`Site is currently at ${MILESTONES[d.ms-1]?MILESTONES[d.ms-1].label:'pre-assessment'}. ${9-d.ms} milestone${9-d.ms===1?'':'s'} remain before Reclamation Certificate application can proceed.`);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════
+function exportExcel(){
+  const v=sel.value,wb=XLSX.utils.book_new(),r=getRollup();
+  if(v==='ALL'){
+    const h1=['Reclamation Phase / Line Item','Supplier','Stage','Contingent','Total AFE ($)','Actual ($)','Committed ($)','Forecast ($)','Variance ($)'];
+    const r1=r.cats.map(c=>[c.label,c.supplier,c.stage===0?'Ongoing':(MILESTONES[c.stage-1]?MILESTONES[c.stage-1].label:'—'),c.cont?'Yes':'No',c.afe,c.actual,c.committed,c.forecast,c.forecast-c.afe]);
+    r1.push(['TOTAL','','','',r.afe,r.actual,r.committed,r.forecast,r.forecast-r.afe]);
+    const ws1=XLSX.utils.aoa_to_sheet([['EMI CostTrack™ — Reclamation & Remediation Program Rollup'],
+      ['Operator: Whitecap Resources Inc.  |  Environmental: Highwood Environmental  |  Engineering: Rewild'],
+      ['Generated: '+new Date().toLocaleDateString()],[],h1,...r1]);
+    ws1['!cols']=[{wch:40},{wch:32},{wch:22},{wch:11},{wch:14},{wch:14},{wch:14},{wch:14},{wch:13}];
+    XLSX.utils.book_append_sheet(wb,ws1,'Reclamation Rollup');
+
+    const h2=['UWI','Site Condition','Current Milestone','Milestone #','Target RC Year','Abandonment ($)','Recl. AFE ($)','Recl. Actual ($)','Recl. Forecast ($)','Total Closure ($)','Carrying Cost ($)','RC Issued'];
+    const r2=r.sites.map(s=>[s.uwi,s.cond.label,MILESTONES[s.ms-1]?MILESTONES[s.ms-1].label:'Not Started',s.ms,s.rcYear,s.abdn,s.afe,s.actual,s.forecast,s.abdn+s.forecast,s.carry,s.ms>=9?'Yes':'No']);
+    const ws2=XLSX.utils.aoa_to_sheet([h2,...r2]);
+    ws2['!cols']=[{wch:26},{wch:26},{wch:22},{wch:11},{wch:13},{wch:15},{wch:13},{wch:14},{wch:15},{wch:15},{wch:14},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws2,'Site Register');
+
+    const cert=r.sites.filter(s=>s.ms>=9);
+    const total=r.abdn+r.forecast;
+    const ws3=XLSX.utils.aoa_to_sheet([['Liability Retirement Summary'],[],
+      ['Total ARO (Abandonment + Reclamation)',total],
+      ['Liability Retired (RC Issued)',cert.reduce((a,s)=>a+s.abdn+s.forecast,0)],
+      ['% ARO Retired',+(cert.reduce((a,s)=>a+s.abdn+s.forecast,0)/total).toFixed(3)],
+      ['Reclamation Certificates Issued',cert.length],
+      ['Sites Pending Certification',38-cert.length],
+      ['Qualifying Closure Spend (Reclamation)',r.actual],
+      ['Annual Carrying Cost Burn',(38-cert.length)*CARRY_PER_YEAR],
+      ['Lifetime Carrying Cost to Certification',r.carry],[],
+      ['Site Condition Distribution'],
+      ...Object.keys(COND).map(k=>[COND[k].label,r.sites.filter(s=>s.condKey===k).length])]);
+    ws3['!cols']=[{wch:42},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws3,'Liability Summary');
+    XLSX.writeFile(wb,'EMI_Reclamation_Program_Rollup.xlsx');
+  }else{
+    const s=getSite(v);
+    const h=['Reclamation Phase / Line Item','Supplier','Stage','Contingent','AFE ($)','Actual ($)','Committed ($)','Forecast ($)','Variance ($)','Status'];
+    const rows=s.cats.map(c=>{const nt=c.afe===0;const ov=c.forecast>c.afe&&!nt;
+      return[c.label,c.supplier,c.stage===0?'Ongoing':(MILESTONES[c.stage-1]?MILESTONES[c.stage-1].label:'—'),c.cont?'Yes':'No',c.afe,c.actual,c.committed,c.forecast,c.forecast-c.afe,nt?'Not Triggered':ov?'Over AFE':'On Budget'];});
+    rows.push(['TOTAL','','','',s.afe,s.actual,s.committed,s.forecast,s.forecast-s.afe,'']);
+    const ws=XLSX.utils.aoa_to_sheet([['EMI CostTrack™ — Reclamation AFE Report'],
+      ['UWI: '+s.uwi],['Site Condition: '+s.cond.label],
+      ['Current Milestone: '+(MILESTONES[s.ms-1]?MILESTONES[s.ms-1].label:'Not Started')+' ('+s.ms+' of 9)'],
+      ['Target RC Year: '+s.rcYear],
+      ['Abandonment Cost: '+fmtFull(s.abdn)+'  |  Total Closure Cost: '+fmtFull(s.abdn+s.forecast)],
+      ['Findings: '+s.cond.findings],
+      ['Generated: '+new Date().toLocaleDateString()],[],h,...rows]);
+    ws['!cols']=[{wch:40},{wch:32},{wch:22},{wch:11},{wch:13},{wch:13},{wch:13},{wch:13},{wch:13},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws,'Reclamation AFE');
+    XLSX.writeFile(wb,'EMI_Reclamation_'+v.replace(/\//g,'_')+'.xlsx');
+  }
+}
+
+function exportCSV(){
+  const v=sel.value;let csv='',fn='';
+  if(v==='ALL'){
+    const r=getRollup();
+    csv='UWI,Site Condition,Current Milestone,Milestone #,Target RC Year,Abandonment ($),Recl AFE ($),Recl Actual ($),Recl Forecast ($),Total Closure ($),Carrying Cost ($),RC Issued\n';
+    r.sites.forEach(s=>{csv+=`"${s.uwi}","${s.cond.label}","${MILESTONES[s.ms-1]?MILESTONES[s.ms-1].label:'Not Started'}",${s.ms},${s.rcYear},${s.abdn},${s.afe},${s.actual},${s.forecast},${s.abdn+s.forecast},${s.carry},${s.ms>=9?'Yes':'No'}\n`;});
+    fn='EMI_Reclamation_Program_Rollup.csv';
+  }else{
+    const s=getSite(v);
+    csv=`UWI,${s.uwi}\nSite Condition,"${s.cond.label}"\nCurrent Milestone,"${MILESTONES[s.ms-1]?MILESTONES[s.ms-1].label:'Not Started'}"\nTarget RC Year,${s.rcYear}\nAbandonment Cost,${s.abdn}\nTotal Closure Cost,${s.abdn+s.forecast}\n\n`;
+    csv+='Line Item,Supplier,Stage,Contingent,AFE ($),Actual ($),Committed ($),Forecast ($),Variance ($)\n';
+    s.cats.forEach(c=>{csv+=`"${c.label}","${c.supplier}","${c.stage===0?'Ongoing':(MILESTONES[c.stage-1]?MILESTONES[c.stage-1].label:'—')}",${c.cont?'Yes':'No'},${c.afe},${c.actual},${c.committed},${c.forecast},${c.forecast-c.afe}\n`;});
+    fn='EMI_Reclamation_'+v.replace(/\//g,'_')+'.csv';
+  }
+  const b=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();
+}
+
+// INIT
+document.getElementById('liveDate').textContent='Updated: '+new Date().toLocaleString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+renderLiability();
+render(getRollup());
+</script>
+</body>
+</html>
