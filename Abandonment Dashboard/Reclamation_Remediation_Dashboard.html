@@ -119,6 +119,12 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#EDF0F4;color:
 .mm-l{font-size:8.5px;color:#8896A6;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;font-weight:700;}
 .mm-x{font-size:9px;margin-top:2px;}
 
+/* VIEW TOGGLE */
+.view-toggle{display:flex;gap:3px;background:var(--lgray);border-radius:7px;padding:3px;flex-shrink:0;}
+.toggle-btn{border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;color:#8896A6;padding:6px 12px;border-radius:5px;transition:background .15s,color .15s;white-space:nowrap;}
+.toggle-btn:hover:not(.active){color:var(--navy);}
+.toggle-btn.active{background:var(--navy);color:#fff;}
+
 /* TABLES */
 .table-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px;}
 .th-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
@@ -251,13 +257,22 @@ tfoot td:last-child{border-radius:0 0 6px 0;}
     <div class="chart-card">
       <div class="ch-t" id="chT">Multi-Year Reclamation Spend Profile</div>
       <div class="ch-s" id="chS">Actual and forecast spend by program year</div>
-      <canvas id="mainChart" height="220"></canvas>
+      <canvas id="mainChart" height="175"></canvas>
       <div class="mini" id="mini"></div>
     </div>
     <div class="chart-card">
-      <div class="ch-t">Spend by Reclamation Phase</div>
-      <div class="ch-s" id="donutS">Actual spend to date</div>
-      <canvas id="donutChart" height="220"></canvas>
+      <div class="th-row" style="margin-bottom:10px;">
+        <div>
+          <div class="ch-t">Spend by Reclamation Phase</div>
+          <div class="ch-s" id="donutS" style="margin-bottom:0;">Actual spend to date</div>
+        </div>
+        <div class="view-toggle">
+          <button type="button" class="toggle-btn active" data-view="line" onclick="setCategoryView('line')">Spend vs Budget</button>
+          <button type="button" class="toggle-btn" data-view="donut" onclick="setCategoryView('donut')">Doughnut</button>
+        </div>
+      </div>
+      <canvas id="donutChart" height="175" style="display:none;"></canvas>
+      <canvas id="categoryLineChart" height="340"></canvas>
     </div>
   </div>
 
@@ -522,7 +537,8 @@ const fmtM=n=>n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+
 const fmtFull=n=>'$'+Math.round(n).toLocaleString();
 const pctS=(a,b)=>b?((a/b)*100).toFixed(1)+'%':'0%';
 
-let cMain=null,cDonut=null,cFunnel=null,c2=null;
+let cMain=null,cDonut=null,cCategory=null,cFunnel=null,c2=null;
+let categoryView='line';
 
 // Dropdown
 const sel=document.getElementById('siteSelect');
@@ -745,8 +761,54 @@ function charts(d,isAll){
     ?'Total actual spend — '+fmtFull(d.actual)+' across 38 sites'
     :'Actual spend to date — '+fmtFull(d.actual);
 
+  // SPEND VS BUDGET (BAR)
+  if(cCategory)cCategory.destroy();
+  cCategory=new Chart(document.getElementById('categoryLineChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:d.cats.map(c=>c.label),datasets:[
+      {label:'Actual Spend',data:d.cats.map(c=>c.actual),backgroundColor:'#2E75B6',borderRadius:3,maxBarThickness:14},
+      {label:'AFE Budget',data:d.cats.map(c=>c.afe),backgroundColor:'#C9A84C',borderRadius:3,maxBarThickness:14}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{
+        legend:{display:true,position:'top',align:'end',labels:{font:{size:9},boxWidth:10,padding:8}},
+        tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw)}}
+      },
+      scales:{
+        x:{ticks:{font:{size:8},color:'#8896A6',maxRotation:55,minRotation:55},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#8896A6',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'#EDF0F4'}}
+      },
+      interaction:{mode:'index',intersect:false}
+    }
+  });
+
   // CHART 2 — liability retirement curve / site cost breakdown
   chart2(d,isAll);
+
+  applyCategoryView();
+  if(cDonut)cDonut.resize();
+  if(cCategory)cCategory.resize();
+}
+
+// ── CATEGORY VIEW TOGGLE ─────────────────────────────────────────
+function applyCategoryView(){
+  const donutCanvas=document.getElementById('donutChart');
+  const lineCanvas=document.getElementById('categoryLineChart');
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===categoryView));
+  if(categoryView==='donut'){
+    lineCanvas.style.display='none';
+    donutCanvas.style.display='block';
+  }else{
+    donutCanvas.style.display='none';
+    lineCanvas.style.display='block';
+  }
+}
+
+function setCategoryView(view){
+  categoryView=view;
+  applyCategoryView();
+  if(cDonut)cDonut.resize();
+  if(cCategory)cCategory.resize();
 }
 
 function chart2(d,isAll){
